@@ -3,6 +3,7 @@
 from math import sin, cos, atan2, sqrt, pi
 from random import random
 import time
+import copy
 
 ENV_DECISION_TIME = 0.5 # seconds
 
@@ -11,9 +12,25 @@ ENV_HEIGHT = 1000
 ENV_N_FOOD = 10
 ENV_N_ANIMALS = 5
 
+CULL_PERIOD = 10 / ENV_DECISION_TIME
+
 ANIMAL_MOVE_DISTANCE = 5
 
 FOOD_STRENGTH = 1
+
+FOOD_EAT_DISTANCE = 2
+
+class Neuron(object):
+    pass
+
+class Perceptron(Neuron):
+    def __init__(self, threshold, num_inputs):
+        self.w = [0 for i in range(num_inputs)] # weights
+
+        self.threshold = threshold
+
+    def output(self, x):
+        return 1 if sum(weight * x[i] for (i, weight) in self.w) > self.threshold else 0
 
 class Entity(object):
     def __init__(self, x, y):
@@ -22,41 +39,84 @@ class Entity(object):
         self.y = y
 
 class Animal(Entity):
-    """ defines an animal, which is a "species" of the neural network """
+    """ defines an animal, which is a "species" containing a neural network """
     def __init__(self, x, y, food):
         super(Animal, self).__init__(x, y)
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = 0
 
-        """ this is where the magic happens """
-        self.neurons = []
+        """ number of food eaten in this generation by tihs animal """
+        self.num_food = 0
+
+        """ inputs """
+        self.smell = 0
+
+        """ synapses """
+        self.syn0 = random()
+
+        """ outputs """
+        self.out_angle = None
 
         self.food = food
 
-    def simulate(self):
+    def breed(self):
+        """ returns a new animal object (a mutated version of this one) """
+        self.num_food = 0
+
+        child = copy.deepcopy(self)
+
+        """ TODO: randomly mutate the child here """
+
+        return child
+
+    def input(self):
         """
         this is run once per simulation
-        this function is the input point to the neural network belonging to this animal
+        this function is the entry point to the neural network belonging to this animal
         """
-        pass
 
-    def get_strongest_direction(self):
-        """ returns the direction of the strongest smell """
-        distance = [sqrt((self.x - food.x) ** 2, (self.y - food.y) ** 2) for food in self.food]
+        """ input values """
+        smell = self.get_current_smell()
 
-        angle = [atan2((food.y - self.y), (food.x - self.y)) for food in self.food]
+        input0 = 1 if self.smell > self.smell else 0
 
-        strongest_key = distance.index(min(distance))
+        angle = self.syn0
 
-        return angle[strongest_key]
+        self.out_angle
+
+        """ move in the direction of the synapse value """
+        move(self.out_angle)
+
+        """ set the strength synapse to the current smell strength """
+        self.out_angle
+
+    def get_current_smell(self):
+        """ gets the current smell strength of the animal """
+        smells = [food.strength / (sqrt((self.x - food.x) ** 2, (self.y - food.y) ** 2) ** 2)
+                for food in self.food]
+
+        return sum(smells)
+
+    def eat_food(self):
+        """ eats food if we're on top of it (defined as within a certain small distance) """
+        for item in self.food:
+            distance = sqrt((item.x - self.x) ** 2 + (item.y - self.y) ** 2)
+
+            eaten = distance < FOOD_EAT_DISTANCE
+
+            if eaten:
+                self.food.remove(item)
+                self.num_food += 1
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
         distance = ANIMAL_MOVE_DISTANCE # constant moving distance
 
-        self.x += distance * cos(angle)
-        self.y += distance * sin(angle)
+        self.orientation += angle
+
+        self.x += distance * cos(self.orientation)
+        self.y += distance * sin(self.orientation)
 
 class Food(Entity):
     """ defines a food particle in the environment (later add taste, health etc. """
@@ -82,21 +142,32 @@ class Environment(object):
         self.generate_food()
 
     def generate(self):
-        self.num_simulations = 0
+        """ start a generation """
+        self.time = 0
 
-        while True:
+        while self.time < CULL_PERIOD:
             self.simulate()
-            self.num_simulations += 1
+            self.time += ENV_DECISION_TIME
             time.sleep(ENV_DECISION_TIME)
 
-    def simulate(self):
-        print("Simulation %s" % self.num_simulations)
+        self.cull()
+        self.generate() # new generation
 
+    def simulate(self):
+        """ input current data to each animal """
         for item in self.animals:
-            item.simulate()
+            item.input()
+
+    def cull(self):
+        """ remove animals that have no food """
+        self.animals = [animal for animal in self.animals if animal.num_food > 0]
+
+        for animal in self.animals:
+            """ breed this animal """
+            self.animals.append(animal.breed())
 
     def generate_food(self):
-        """ generates random food particles """
+        """ generates random food particles (run once per generation) """
         num_food = ENV_N_FOOD
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_food)]
