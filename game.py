@@ -1,4 +1,4 @@
-from math import sin, cos, pi
+from math import sin, cos, atan2, sqrt, pi
 from random import random
 
 ENV_WIDTH = 1000
@@ -30,19 +30,13 @@ class Animal(Entity):
 
     def get_strongest_direction(self):
         """ returns the direction of the strongest smell """
-        relative_pos_strength = [
-            (
-                sqrt(pow(self.x - food.x, 2) + pow(self.y - food.y, 2)),
-                atan((food.y - self.y) / (food.x - self.y))
-            )
-            for food in self.food
-        ]
+        distance = [sqrt((self.x - food.x) ** 2, (self.y - food.y) ** 2) for food in self.food]
 
-        smell = [1 / (pow(distance + 1, 2)) for (distance, angle) in relative_pos]
+        angle = [atan2((food.y - self.y), (food.x - self.y)) for food in self.food]
 
-        food_key = smell.index(max(smell))
+        strongest_key = distance.index(min(distance))
 
-        return relative_pos_strength[food_key][1]
+        return angle[strongest_key]
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
