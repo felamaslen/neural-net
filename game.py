@@ -3,20 +3,19 @@
 from math import sin, cos
 from random import random
 import time
-import copy
 
 import tkinter
 
 from learn import Entity, Animal, Food
 
-ENV_DECISION_TIME = 0.5 # seconds
+ENV_DECISION_TIME = 0.01 # seconds
 
 ENV_WIDTH = 1000
 ENV_HEIGHT = 1000
 ENV_N_FOOD = 100
-ENV_N_ANIMALS = 5
+ENV_N_ANIMALS = 20
 
-CULL_PERIOD = 10 / ENV_DECISION_TIME
+CULL_PERIOD = 5 / ENV_DECISION_TIME
 
 FOOD_RADIUS = 3
 FOOD_COLOR = "yellow"
@@ -120,9 +119,10 @@ class Environment(object):
         """ remove animals that have no food """
         self.animals = [animal for animal in self.animals if animal.num_food > 0]
 
-        for animal in self.animals:
+        num_animals = len(self.animals)
+        for i in range(num_animals):
             """ breed this animal """
-            self.animals.append(animal.breed())
+            self.animals.append(self.animals[i].breed())
 
     def generate_food(self):
         """ generates random food particles (run once per generation) """

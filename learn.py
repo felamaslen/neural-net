@@ -7,7 +7,7 @@ ANIMAL_MOVE_DISTANCE = 5
 ANIMAL_MOVE_MAX_ANGLE = pi / 4
 
 FOOD_STRENGTH = 1
-FOOD_EAT_DISTANCE = 2
+FOOD_EAT_DISTANCE = 5
 
 class Entity(object):
     def __init__(self, x, y):
@@ -21,13 +21,13 @@ class Animal(Entity):
         super(Animal, self).__init__(x, y)
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
-        self.orientation = pi / 4;
+        self.orientation = random() * 2 * pi
 
-        self.neural_bias = -0.3;
-        self.num_inputs = 1;
+        self.neural_bias = -1
+        self.num_inputs = 1
 
         """ create an input neuron, initialised with random weight """
-        self.neuron = Neuron([random() - 0.5], self.neural_bias, self.num_inputs);
+        self.neuron = Neuron([10000 * (random() - 0.5)], self.neural_bias, self.num_inputs)
 
         """ number of food eaten in this generation by tihs animal """
         self.num_food = 0
@@ -41,7 +41,9 @@ class Animal(Entity):
         """ returns a new animal object (a mutated version of this one) """
         self.num_food = 0
 
-        child = copy.deepcopy(self)
+        child = Animal(self.x, self.y, self.food)
+        child.orientation = self.orientation
+        child.neuron.weight = self.neuron.weight
 
         child.mutate()
 
@@ -49,7 +51,7 @@ class Animal(Entity):
 
     def mutate(self):
         """ modify the weight of the neuron randomly """
-        self.neuron.w[0] += random() * 0.1 - 0.2
+        self.neuron.weight[0] += (5000 * (random() - 0.5))
 
     def input(self):
         """
