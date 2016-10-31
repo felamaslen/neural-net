@@ -7,12 +7,16 @@ ENV_N_FOOD = 10
 
 ANIMAL_MOVE_DISTANCE = 5
 
-class Animal(object):
-    """ defines an animal, which is a "species" of the neural network """
+class Entity(object):
     def __init__(self, x, y):
-        """ the position of the animal in the environment """
+        """ the position of the entity in the environment """
         self.x = x
         self.y = y
+
+class Animal(Entity):
+    """ defines an animal, which is a "species" of the neural network """
+    def __init__(self, x, y):
+        super(Animal, self).__init__(x, y)
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = 0
@@ -24,12 +28,10 @@ class Animal(object):
         self.x += distance * cos(angle)
         self.y += distance * sin(angle)
 
-class Food(object):
+class Food(Entity):
     """ defines a food particle in the environment (later add taste, health etc. """
     def __init__(self, x, y):
-        """ the position of the food particle in the environment """
-        self.x = x
-        self.y = x
+        super(Animal, self).__init__(x, y)
 
 
 class Environment(object):
@@ -49,9 +51,9 @@ class Environment(object):
         """ generates random food particles """
         num_food = ENV_N_FOOD
 
-        pos = [[random() * self.W, random() * self.H] for i in range(num_food)]
+        pos = [(random() * self.W, random() * self.H) for i in range(num_food)]
 
-        self.food += [Food(pos[i][0], pos[i][1]) for i in range(num_food)]
+        self.food = [Food(x, y) for (x, y) in pos]
 
 """ new environment """
 env = Environment()
