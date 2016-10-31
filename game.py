@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
-from math import sin, cos, atan2, sqrt, pi, e
+from math import sin, cos
 from random import random
 import time
 import copy
+
+import tkinter
 
 from learn import Entity, Animal, Food
 
@@ -11,10 +13,18 @@ ENV_DECISION_TIME = 0.5 # seconds
 
 ENV_WIDTH = 1000
 ENV_HEIGHT = 1000
-ENV_N_FOOD = 10
+ENV_N_FOOD = 100
 ENV_N_ANIMALS = 5
 
 CULL_PERIOD = 10 / ENV_DECISION_TIME
+
+FOOD_RADIUS = 3
+FOOD_COLOR = "yellow"
+
+ANIMAL_HEAD_RADIUS  = 5
+ANIMAL_HEAD_COLOR   = "red"
+ANIMAL_BODY_LENGTH  = 15
+ANIMAL_BODY_COLOR   = "black"
 
 class Environment(object):
     """ defines the environment for the simulation """
@@ -32,6 +42,60 @@ class Environment(object):
         """ generate random food to begin with """
         self.generate_food()
 
+        """ graphics window """
+        self.window = tkinter.Tk()
+
+        self.canvas = tkinter.Canvas(self.window, width = self.W, height = self.H)
+        self.canvas.pack()
+
+        """ start creating generations """
+        self.generate()
+
+        self.window.mainloop()
+
+    def draw_display(self):
+        """ displays the current environment state in the window """
+        self.canvas.delete("all")
+
+        for food in self.food:
+            self.draw_food(food)
+
+        for animal in self.animals:
+            self.draw_animal(animal)
+
+        self.window.update_idletasks()
+        self.window.update()
+
+    def draw_food(self, food):
+        """ draw a piece of food """
+        radius = FOOD_RADIUS
+        color = FOOD_COLOR
+
+        self.canvas.create_oval(
+                food.x - radius, food.y - radius,
+                food.x + radius, food.y + radius,
+                fill = color)
+
+    def draw_animal(self, animal):
+        """ draw an animal """
+        r_head = ANIMAL_HEAD_RADIUS
+        l_body = ANIMAL_BODY_LENGTH
+
+        c_head = ANIMAL_HEAD_COLOR
+        c_body = ANIMAL_BODY_COLOR
+
+        """ draw body """
+        self.canvas.create_line(
+                animal.x, animal.y,
+                animal.x - l_body * cos(animal.orientation), animal.y - l_body * sin(animal.orientation),
+                fill = c_body)
+
+        """ draw head """
+        self.canvas.create_oval(
+                animal.x - r_head, animal.y - r_head,
+                animal.x + r_head, animal.y + r_head,
+                fill = c_head)
+
     def generate(self):
         """ start a generation """
         self.time = 0
@@ -48,6 +112,9 @@ class Environment(object):
         """ input current data to each animal """
         for item in self.animals:
             item.input()
+
+        """ redraw the display, as the state changed """
+        self.draw_display()
 
     def cull(self):
         """ remove animals that have no food """
@@ -76,5 +143,3 @@ class Environment(object):
 """ new environment """
 env = Environment()
 
-""" create a generation (generation 0) """
-env.generate()

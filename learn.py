@@ -1,3 +1,8 @@
+from math import sin, cos, atan2, sqrt, pi
+from random import random
+
+from neuron import Neuron
+
 ANIMAL_MOVE_DISTANCE = 5
 ANIMAL_MOVE_MAX_ANGLE = pi / 4
 
@@ -22,7 +27,7 @@ class Animal(Entity):
         self.num_inputs = 1;
 
         """ create an input neuron, initialised with random weight """
-        self.neuron = Neuron([random()], self.neural_bias, self.num_inputs);
+        self.neuron = Neuron([random() - 0.5], self.neural_bias, self.num_inputs);
 
         """ number of food eaten in this generation by tihs animal """
         self.num_food = 0
