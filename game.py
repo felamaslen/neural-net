@@ -7,7 +7,7 @@ ENV_N_FOOD = 10
 
 ANIMAL_MOVE_DISTANCE = 5
 
-class Animal:
+class Animal(object):
     """ defines an animal, which is a "species" of the neural network """
     def __init__(self, x, y):
         """ the position of the animal in the environment """
@@ -24,7 +24,7 @@ class Animal:
         self.x += distance * cos(angle)
         self.y += distance * sin(angle)
 
-class Food:
+class Food(object):
     """ defines a food particle in the environment (later add taste, health etc. """
     def __init__(self, x, y):
         """ the position of the food particle in the environment """
@@ -32,7 +32,7 @@ class Food:
         self.y = x
 
 
-class Environment:
+class Environment(object):
     """ defines the environment for the simulation """
     def __init__(self):
         """ defines the 2d bounds of the environment """
