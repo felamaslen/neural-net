@@ -2,11 +2,14 @@
 
 import pdb
 import sys
+import select
 from math import sin, cos, floor
 from random import random, randint
 import time
 
 import tkinter
+
+from getkey import KeyPoller
 
 from constants import *
 from learn import Entity, Animal, Food
@@ -17,6 +20,8 @@ class Environment(object):
         """ defines the 2d bounds of the environment """
         self.W = ENV_WIDTH
         self.H = ENV_HEIGHT
+
+        self.visualise = VISUALISE
 
         self.generation = 0
 
@@ -41,7 +46,7 @@ class Environment(object):
         """ displays the current environment state in the window """
         self.canvas.delete("all")
 
-        if VISUALISE:
+        if self.visualise:
             for food in self.food:
                 self.draw_food(food)
 
@@ -93,16 +98,20 @@ class Environment(object):
         """ start a generation """
         self.time = 0
 
-        print("Generation %d" % self.generation)
         self.generation += 1
 
         """ generate random food """
         del self.food[:]
         self.food += self.generate_food()
 
-        for i in range(CULL_PERIOD):
-            self.simulate()
-            #time.sleep(SIMULATION_SPEED)
+        with KeyPoller() as key_poller:
+            for i in range(CULL_PERIOD):
+                self.simulate()
+
+                c = key_poller.poll()
+                if c == 'v':
+                    self.visualise = not self.visualise
+                    print("Toggling visualisation mode")
 
         self.cull()
 
