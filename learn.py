@@ -1,16 +1,15 @@
-from math import sin, cos, atan2, sqrt, pi
+import pdb
+from math import sin, cos, atan2, sqrt, pi, e
 from random import random
 
 from neuron import Neuron
 
-ANIMAL_MOVE_DISTANCE = 5
+NUM_MIDDLE_NEURONS = 20
+
+ANIMAL_MOVE_SPEED = 5
 ANIMAL_MOVE_MAX_ANGLE = pi / 4
 
 NUM_CHILDREN = 1
-
-WEIGHT_SEED = 5
-MUTATION_RATE = 5
-MUTATION_ROTATE_SIZE = pi / 20
 
 FOOD_STRENGTH = 1
 FOOD_EAT_DISTANCE = 5
@@ -27,51 +26,100 @@ class Entity(object):
 
 class Animal(Entity):
     """ defines an animal, which is a "species" containing a neural network """
-    def __init__(self, x, y, W, H, food):
+    def __init__(self, x, y, W, H, food, child = False):
         super(Animal, self).__init__(x, y, W, H)
+
+        self.is_child = child
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = random() * 2 * pi
 
+        """ initialise speed with a randomised value """
+        self.speed = ANIMAL_MOVE_SPEED * 0.5 * (1 + random())
+
         self.neural_bias = 0
-        self.num_inputs = 1
 
+        """ NEURAL NETWORK STRUCTURE DEFINITION """
+        self.num_middle_neurons = NUM_MIDDLE_NEURONS
+
+        """ NEURAL NETWORK: INPUT """
         """ create an input neuron, initialised with random weight """
-        self.neuron = Neuron([WEIGHT_SEED * (random() - 0.5)], self.neural_bias, self.num_inputs)
+        self.neuron_input = Neuron([1], self.neural_bias)
 
-        """ number of food eaten in this generation by tihs animal """
+        """ NEURAL NETWORK: HIDDEN LAYER """
+        seed_rotation = 0 if self.is_child else random()
+        seed_speed = 0 if self.is_child else random()
+
+        self.neuron_rotation    = Neuron([1], self.neural_bias) # rotation
+        self.neuron_speed       = Neuron([1], self.neural_bias) # speed
+
+        """ middle neurons handle input from both rotation and speed neurons """
+        """ each middle neuron is weighted staticly towards either speed or rotation """
+        self.neurons_middle = [
+                Neuron([
+                    1 - i / (self.num_middle_neurons - 1),
+                    i / (self.num_middle_neurons - 1)
+                ], self.neural_bias)
+                for i in range(self.num_middle_neurons)
+            ]
+
+        """ NEURAL NETWORK: OUTPUT """
+        weights_rotation = []
+        for i in range(self.num_middle_neurons):
+            weights_rotation.append(self.weight_seed())
+
+        self.neuron_out_rotation = Neuron(weights_rotation, self.neural_bias)
+
+        weights_speed = []
+        for i in range(self.num_middle_neurons):
+            weights_speed.append(self.weight_seed())
+
+        self.neuron_out_speed = Neuron(weights_speed, self.neural_bias)
+
+        """ number of food eaten in this generation by this animal """
         self.num_food = 0
-
-        """ inputs """
-        self.smell = 0
 
         self.food = food
 
-    def breed(self):
-        """ returns a new animal object (a mutated version of this one) """
-        self.num_food = 0
+        """ inputs """
+        self.smell = self.get_current_smell()
 
-        children = []
+    def weight_seed(self):
+        return 1 if self.is_child else random() - 0.5
 
-        for i in range(NUM_CHILDREN):
-            child = Animal(self.x, self.y, self.W, self.H, self.food)
-            child.orientation = self.orientation
-            child.neuron.weight = self.neuron.weight
+    def fire_neurons(self, delta, i):
+        """ inputs delta into the neural network, gets output """
 
-            child.mutate()
+        """
+        delta is the actual smell difference;
+        it must be normalised between -1 and 1
 
-            children.append(child)
+        the maximum theoretical "jump" is from right next to all the food particles
+        (if they are on top of each other) to a point arbitrarily far from all the
+        food particles (or vice versa)
+        """
+        max_delta = sum([food.strength for food in self.food])
+        min_delta = 0#-max_delta
 
-        return children
+        delta_norm = -1 + 2 * (delta - min_delta) / (max_delta - min_delta)
 
-    def mutate(self):
-        """ modify the weight of the neuron randomly """
-        self.neuron.weight[0] += MUTATION_RATE * (random() - 0.5)
+        first_input = self.neuron_input.output([delta_norm])
 
-        """ modify the orientation """
-        self.orientation += MUTATION_ROTATE_SIZE * (random() - 0.5)
+        first_out_rotation  = self.neuron_rotation.output([first_input])
+        first_out_speed     = self.neuron_speed.output([first_input])
 
-    def input(self):
+        mid_out = [self.neurons_middle[i].output([first_out_rotation, first_out_speed])
+                for i in range(self.num_middle_neurons)]
+
+        last_out_rotation   = self.neuron_out_rotation.output(mid_out)
+        last_out_speed      = self.neuron_out_speed.output(mid_out)
+
+        if i == 0:
+            print("%0.2f -> %0.20f" % (delta, last_out_rotation))
+
+        return last_out_rotation, last_out_speed
+
+    def input(self, i):
         """
         this is run once per simulation
         this function is the entry point to the neural network belonging to this animal
@@ -82,11 +130,14 @@ class Animal(Entity):
 
         """ use the difference between the smell now and the smell before,
         to determine the new angle """
-        smell_delta = 0 if smell == 0 else (smell - self.smell) / smell
+        smell_delta = smell# - self.smell
 
-        neuron_output = self.neuron.output([smell_delta])
+        """ open fire! """
+        neuron_out_rotation, neuron_out_speed = self.fire_neurons(smell_delta, i)
 
-        delta_angle = ANIMAL_MOVE_MAX_ANGLE * (2 * neuron_output - 1)
+        delta_angle = ANIMAL_MOVE_MAX_ANGLE * (2 * neuron_out_rotation - 1)
+
+        self.speed += neuron_out_speed / 1000
 
         self.smell = smell
 
@@ -98,10 +149,10 @@ class Animal(Entity):
 
     def get_current_smell(self):
         """ gets the current smell strength of the animal """
-        smells = [food.strength / (
-                    ((self.x - food.x) / self.W) ** 2 + ((self.y - food.y) / self.H) ** 2
-                )
-                for food in self.food]
+        smells = [food.strength * pow(
+                e, -(((self.x - food.x) / self.W) ** 2 + ((self.y - food.y) / self.H) ** 2)
+            )
+            for food in self.food]
 
         return sum(smells)
 
@@ -118,12 +169,10 @@ class Animal(Entity):
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
-        distance = ANIMAL_MOVE_DISTANCE # constant moving distance
+        self.orientation += angle
 
-        self.orientation += min(ANIMAL_MOVE_MAX_ANGLE, max(-ANIMAL_MOVE_MAX_ANGLE, angle))
-
-        new_x = self.x + distance * cos(self.orientation)
-        new_y = self.y + distance * sin(self.orientation)
+        new_x = self.x + self.speed * cos(self.orientation)
+        new_y = self.y + self.speed * sin(self.orientation)
 
         """ bounce off the walls """
         if new_x <= 0 or new_x >= self.W - 1:

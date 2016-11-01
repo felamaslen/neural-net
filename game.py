@@ -9,13 +9,15 @@ import tkinter
 
 from learn import Entity, Animal, Food
 
-SIMULATION_SPEED = 0.02 # seconds
-CULL_PERIOD = 5 / SIMULATION_SPEED
+SIMULATION_SPEED = 0.01 # seconds
+CULL_PERIOD = 2 / SIMULATION_SPEED
 
 ENV_WIDTH = 500
 ENV_HEIGHT = 500
 ENV_N_FOOD = 50
-ENV_N_ANIMALS = 10
+ENV_N_ANIMALS = 20
+
+MUTATION_RATE = 0.1
 
 FOOD_RADIUS = 3
 FOOD_COLOR = "yellow"
@@ -121,22 +123,47 @@ class Environment(object):
 
     def simulate(self):
         """ input current data to each animal """
+        i = 0
         for item in self.animals:
-            item.input()
+            item.input(i)
+            i = 1
 
         """ redraw the display, as the state changed """
         self.draw_display()
 
     def cull(self):
-        """ kill the half of the animals which performed the worst """
+        """ kill the worst third of the animals """
         self.animals.sort(key = lambda x: x.num_food)
 
-        del self.animals[:floor(len(self.animals) / 2)]
+        del self.animals[:floor(len(self.animals) / 3)]
 
+        self.breed()
+
+    def breed(self):
+        """ combine the remaining animals in pairs """
         num_animals = len(self.animals)
-        for i in range(num_animals):
-            """ breed this animal """
-            self.animals += self.animals[i].breed()
+        i = 0
+        for animal in self.animals:
+            if i > num_animals - 2:
+                break
+
+            if i % 2 == 0:
+                a1 = self.animals[i]
+                a2 = self.animals[i + 1]
+
+                child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
+
+                """ combine and mutate children """
+                child.neuron_out_rotation.apply_weight([MUTATION_RATE * (random() - 0.5) + 0.5 * (
+                    a1.neuron_out_rotation.weight[i] + a2.neuron_out_rotation.weight[i]
+                ) for i in range(child.num_middle_neurons)])
+
+                child.neuron_out_speed.apply_weight([MUTATION_RATE * (random() - 0.5) + 0.5 * (
+                    a1.neuron_out_speed.weight[i] + a2.neuron_out_speed.weight[i]
+                ) for i in range(child.num_middle_neurons)])
+
+                self.animals.append(child)
+            i += 1
 
     def generate_food(self):
         """ generates random food particles (run once per generation) """
