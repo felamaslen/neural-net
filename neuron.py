@@ -1,4 +1,5 @@
 from math import e
+import numpy as np
 
 class Neuron(object):
     def __init__(self, weight, bias):
@@ -7,9 +8,10 @@ class Neuron(object):
 
     @staticmethod
     def sigma(z):
-        return 1 / (1 + pow(e, -max(-700, z)))
+        #return 1 / (1 + pow(e, -max(-700, z)))
+        return 1 / (1 + np.exp(-z))
 
     def output(self, x):
-        return self.sigma(sum(self.weight[i] * x[i] for i in range(len(self.weight))) + self.bias)
+        return self.sigma(np.dot(self.weight, x) + self.bias)
 
 
