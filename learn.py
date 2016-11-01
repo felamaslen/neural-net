@@ -6,7 +6,11 @@ from neuron import Neuron
 ANIMAL_MOVE_DISTANCE = 5
 ANIMAL_MOVE_MAX_ANGLE = pi / 4
 
+NUM_CHILDREN = 1
+
 MUTATION_RATE = 0.1
+MUTATION_ROTATE_SIZE = pi / 20
+
 WEIGHT_SEED = 5
 
 FOOD_STRENGTH = 1
@@ -48,17 +52,25 @@ class Animal(Entity):
         """ returns a new animal object (a mutated version of this one) """
         self.num_food = 0
 
-        child = Animal(self.x, self.y, self.W, self.H, self.food)
-        child.orientation = self.orientation
-        child.neuron.weight = self.neuron.weight
+        children = []
 
-        child.mutate()
+        for i in range(NUM_CHILDREN):
+            child = Animal(self.x, self.y, self.W, self.H, self.food)
+            child.orientation = self.orientation
+            child.neuron.weight = self.neuron.weight
 
-        return child
+            child.mutate()
+
+            children.append(child)
+
+        return children
 
     def mutate(self):
         """ modify the weight of the neuron randomly """
         self.neuron.weight[0] += MUTATION_RATE * (random() - 0.5)
+
+        """ modify the orientation """
+        self.orientation += MUTATION_ROTATE_SIZE * (random() - 0.5)
 
     def input(self):
         """
@@ -71,7 +83,7 @@ class Animal(Entity):
 
         """ use the difference between the smell now and the smell before,
         to determine the new angle """
-        smell_delta = (smell - self.smell) / smell
+        smell_delta = 0 if smell == 0 else (smell - self.smell) / smell
 
         neuron_output = self.neuron.output([smell_delta])
 

@@ -9,13 +9,13 @@ import tkinter
 
 from learn import Entity, Animal, Food
 
-ENV_DECISION_TIME = 0.05 # seconds
-CULL_PERIOD = 10 / ENV_DECISION_TIME
+SIMULATION_SPEED = 0.02 # seconds
+CULL_PERIOD = 5 / SIMULATION_SPEED
 
-ENV_WIDTH = 1000
-ENV_HEIGHT = 1000
-ENV_N_FOOD = 100
-ENV_N_ANIMALS = 20
+ENV_WIDTH = 500
+ENV_HEIGHT = 500
+ENV_N_FOOD = 50
+ENV_N_ANIMALS = 10
 
 FOOD_RADIUS = 3
 FOOD_COLOR = "yellow"
@@ -39,9 +39,6 @@ class Environment(object):
 
         """ defines the animals in the environment """
         self.generate_animals()
-
-        """ generate random food to begin with """
-        self.generate_food()
 
         """ graphics window """
         self.window = tkinter.Tk()
@@ -104,11 +101,15 @@ class Environment(object):
         print("Generation %d" % self.generation)
         self.generation += 1
 
+        """ generate random food """
+        del self.food[:]
+        self.generate_food()
+
         i = 0
         while i < CULL_PERIOD:
             self.simulate()
             i += 1
-            time.sleep(ENV_DECISION_TIME)
+            time.sleep(SIMULATION_SPEED)
 
         self.cull()
 
@@ -133,10 +134,11 @@ class Environment(object):
         num_animals = len(self.animals)
         for i in range(num_animals):
             """ breed this animal """
-            self.animals.append(self.animals[i].breed())
+            self.animals += self.animals[i].breed()
 
     def generate_food(self):
         """ generates random food particles (run once per generation) """
+
         num_food = ENV_N_FOOD
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_food)]
