@@ -5,15 +5,14 @@ def sigma(z):
 
 class Neuron(object):
     def __init__(self, weight, bias):
-        self.apply_weight(weight)
-
+        self.weight = self.apply_weight(weight)
         self.bias = bias
 
     def apply_weight(self, weight):
         """ apply normalised weights """
         total_weight = sum([abs(this_weight) for this_weight in weight])
-
-        self.weight = [this_weight / total_weight for this_weight in weight]
+        
+        return [this_weight / total_weight for this_weight in weight]
 
     def output(self, x):
         """ weights should be normalised """
