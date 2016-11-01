@@ -9,13 +9,16 @@ import tkinter
 
 from learn import Entity, Animal, Food
 
-SIMULATION_SPEED = 0.01 # seconds
-CULL_PERIOD = 2 / SIMULATION_SPEED
+
+
+SIMULATION_SPEED = 0.0001 # seconds
+CULL_PERIOD = 300
+VISUALISE = False
 
 ENV_WIDTH = 500
 ENV_HEIGHT = 500
-ENV_N_FOOD = 50
-ENV_N_ANIMALS = 20
+ENV_N_FOOD = 5
+ENV_N_ANIMALS = 2
 
 MUTATION_RATE = 0.1
 
@@ -56,13 +59,15 @@ class Environment(object):
     def draw_display(self):
         """ displays the current environment state in the window """
         self.canvas.delete("all")
-
+        
         for food in self.food:
             self.draw_food(food)
-
+            
         for animal in self.animals:
             self.draw_animal(animal)
 
+        self.draw_gui()
+        
         self.window.update_idletasks()
         self.window.update()
 
@@ -96,10 +101,15 @@ class Environment(object):
                 animal.x + r_head, animal.y + r_head,
                 fill = c_head)
 
+    def draw_gui(self):
+        w = tkinter.Label(self.canvas, text="GENERATION {}".format(self.generation), fg='white', bg='black')
+        w.place(x=0,y=0)
+        
+
     def generate(self):
         """ start a generation """
         self.time = 0
-
+       
         print("Generation %d" % self.generation)
         self.generation += 1
 
@@ -107,11 +117,9 @@ class Environment(object):
         del self.food[:]
         self.generate_food()
 
-        i = 0
-        while i < CULL_PERIOD:
+        for i in range(CULL_PERIOD):
             self.simulate()
-            i += 1
-            time.sleep(SIMULATION_SPEED)
+            #time.sleep(SIMULATION_SPEED)
 
         self.cull()
 
@@ -129,7 +137,8 @@ class Environment(object):
             i = 1
 
         """ redraw the display, as the state changed """
-        self.draw_display()
+        if VISUALISE:
+            self.draw_display()
 
     def cull(self):
         """ kill the worst third of the animals """
