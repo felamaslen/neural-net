@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import pdb
 import sys
 from math import sin, cos, floor
 from random import random, randint
@@ -7,28 +8,8 @@ import time
 
 import tkinter
 
+from constants import *
 from learn import Entity, Animal, Food
-
-
-
-SIMULATION_SPEED = 0.01 # seconds
-CULL_PERIOD = 300
-VISUALISE = True
-
-ENV_WIDTH = 500
-ENV_HEIGHT = 500
-ENV_N_FOOD = 50
-ENV_N_ANIMALS = 20
-
-MUTATION_RATE = 0.1
-
-FOOD_RADIUS = 3
-FOOD_COLOR = "yellow"
-
-ANIMAL_HEAD_RADIUS  = 5
-ANIMAL_HEAD_COLOR   = "red"
-ANIMAL_BODY_LENGTH  = 15
-ANIMAL_BODY_COLOR   = "black"
 
 class Environment(object):
     """ defines the environment for the simulation """
@@ -63,7 +44,7 @@ class Environment(object):
         if VISUALISE:
             for food in self.food:
                 self.draw_food(food)
-                
+
             for animal in self.animals:
                 self.draw_animal(animal)
 
@@ -133,10 +114,8 @@ class Environment(object):
 
     def simulate(self):
         """ input current data to each animal """
-        i = 0
         for item in self.animals:
-            item.input(i)
-            i = 1
+            item.input()
 
         """ redraw the display, as the state changed """
         self.draw_display()
@@ -145,7 +124,7 @@ class Environment(object):
         """ kill the worst third of the animals """
         self.animals.sort(key = lambda x: x.num_food)
 
-        del self.animals[:floor(len(self.animals) / 3)]
+        del self.animals[:floor(len(self.animals) / 2)]
 
         self.breed()
 
@@ -156,17 +135,25 @@ class Environment(object):
         for i in range(ENV_N_ANIMALS-num_animals):
             a1 = self.animals[randint(0, num_animals-1)]
             a2 = self.animals[randint(0, num_animals-1)]
-            
+
             child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
 
             """ combine and mutate children """
-            for i in range(child.num_input_neurons):
-                child.neurons_input[i].apply_weight([
-                    MUTATION_RATE * (random() - 0.5) + 0.5 * (
-                        a1.neurons_input[i].weight[j] + a2.neurons_input[i].weight[j]
-                    )
-                    for j in range(child.num_output_neurons)
-                ])
+            for i in range(NUM_HIDDEN_NEURONS):
+                child.neurons_hidden[i].weight = [
+                        child.seed() if random() < MUTATION_RATE else 0.5 * (
+                            a1.neurons_hidden[i].weight[j] + a2.neurons_hidden[i].weight[j]
+                        )
+                        for j in range(NUM_INPUTS)
+                    ]
+
+            for i in range(NUM_OUTPUTS):
+                child.neurons_output[i].weight = [
+                        child.seed() if random() < MUTATION_RATE else 0.5 * (
+                            a1.neurons_output[i].weight[j] + a2.neurons_output[i].weight[j]
+                        )
+                        for j in range(NUM_HIDDEN_NEURONS)
+                    ]
 
             self.animals.append(child)
 

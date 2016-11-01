@@ -2,21 +2,8 @@ import pdb
 from math import sin, cos, atan2, sqrt, pi, e
 from random import random
 
+from constants import *
 from neuron import Neuron
-
-NUM_INPUT_NEURONS = 20
-NUM_OUTPUT_NEURONS = 2 # direction, speed
-
-ANIMAL_MOVE_SPEED = 3
-ANIMAL_MOVE_SPEED_MAX = 10
-ANIMAL_MOVE_SPEED_MIN = 0
-
-ANIMAL_MOVE_MAX_ANGLE = pi / 4
-
-NUM_CHILDREN = 1
-
-FOOD_STRENGTH = 1
-FOOD_EAT_DISTANCE = 5
 
 class Entity(object):
     def __init__(self, x, y, W, H):
@@ -36,7 +23,7 @@ class Animal(Entity):
         self.is_child = child
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
-        self.orientation = random() * 2 * pi
+        self.orientation = 0
 
         """ initialise speed with a randomised value """
         self.speed = ANIMAL_MOVE_SPEED * 0.5 * (1 + random())
@@ -44,23 +31,24 @@ class Animal(Entity):
         self.neural_bias = 0
 
         """ NEURAL NETWORK STRUCTURE DEFINITION """
-        self.num_input_neurons = NUM_INPUT_NEURONS
-        self.num_output_neurons = NUM_OUTPUT_NEURONS
+        self.num_hidden_neurons = NUM_HIDDEN_NEURONS
 
-        """ NEURAL NETWORK: INPUT """
-        """ each input neuron is dynamically weighted towards either speed or rotation """
-        self.neurons_input = [
+        """ hidden layer """
+        self.neurons_hidden = [
                 Neuron(
-                    [self.weight_seed() for j in range(self.num_output_neurons)],
-                    self.neural_bias
+                    [self.seed() for j in range(NUM_INPUTS)],
+                    self.seed()
                 )
-                for i in range(self.num_input_neurons)
+                for i in range(self.num_hidden_neurons)
             ]
 
-        """ NEURAL NETWORK: OUTPUT """
+        """ output layer """
         self.neurons_output = [
-                Neuron([1 for i in range(self.num_input_neurons)], self.neural_bias)
-                for j in range(self.num_output_neurons)
+                Neuron(
+                    [self.seed() for j in range(self.num_hidden_neurons)],
+                    self.seed()
+                )
+                for i in range(NUM_OUTPUTS)
             ]
 
         """ number of food eaten in this generation by this animal """
@@ -68,75 +56,52 @@ class Animal(Entity):
 
         self.food = food
 
-        """ inputs """
-        self.smell = self.get_current_smell()
-
-    def weight_seed(self):
+    def seed(self):
         return 1 if self.is_child else random() - 0.5
 
-    def fire_neurons(self, input_values, input_ranges, i):
+    def fire_neurons(self, input_values):
         """ fire the neural network with input values """
 
-        """ first, normalise the input values between -1 and 1 """
-        input_normalised = [-1 + 2 * (value - input_ranges[k][0]) /
-                (input_ranges[k][1] - input_ranges[k][0])
-                for (k, value) in enumerate(input_values)]
+        """ input the values to the hidden layer, get their outputs """
+        hidden_out = [
+                self.neurons_hidden[k].output(input_values)
+                for k in range(NUM_HIDDEN_NEURONS)
+            ]
 
-        """ input the input values into the input neurons, get output """
-        output_layer0 = [
-                self.neurons_input[k].output(input_normalised)
-                for k in range(self.num_input_neurons)]
-
-        """ feed the output from the input neurons, into the output neurons """
-        output = [
-                self.neurons_output[k].output(output_layer0)
-                for k in range(self.num_output_neurons)]
-
-        if i == 0:
-            pass#print("%0.2f -> %0.20f" % (delta, last_out_rotation))
+        """ input those outputs to the output neurons """
+        out = [
+                self.neurons_output[k].output(hidden_out)
+                for k in range(NUM_OUTPUTS)
+            ]
 
         """ return this final output list """
-        return output
+        return out
 
-    def input(self, i):
+    def input(self):
         """
         this is run once per simulation
         this function is the entry point to the neural network belonging to this animal
         """
 
         """ input values """
-        smell = self.get_current_smell()
-
-        """ use the difference between the smell now and the smell before,
-        to determine the new angle """
-        smell_delta = smell - self.smell
-
-        input_values = [smell, smell_delta]
-
-        """ find input ranges for normalisation """
-        input_ranges = []
-
-        """ the maximum possible smell is zero distance from all the food
-        particles, all stacked on top of each other (unlikely, but possible) """
-        max_smell = max(sum([food.strength for food in self.food]), 1)
-
-        """ the minimum possible smell is arbitrarily far from all food particles """
-        min_smell = 0
-
-        """ range for smell """
-        input_ranges.append([min_smell, max_smell])
-
-        """ range for smell_delta (consider a jump from max to min (0) or vice versa) """
-        input_ranges.append([-max_smell, max_smell])
+        input_values = self.get_nearest_vector()
 
         """ open fire! """
-        out_rotation, out_speed = self.fire_neurons(input_values, input_ranges, i)
+        left, right = self.fire_neurons(input_values)
 
-        delta_angle = ANIMAL_MOVE_MAX_ANGLE * (2 * out_rotation - 1)
+        go_left = left > THRESHOLD_OUTPUT and left > right
+        go_right = right > THRESHOLD_OUTPUT and right > left
 
-        self.speed += out_speed / 1000
+        delta_angle = 0
 
-        self.smell = smell
+        if left > THRESHOLD_OUTPUT:
+            delta_angle = ANIMAL_MOVE_ANGLE
+
+        if right > THRESHOLD_OUTPUT:
+            if right > left:
+                delta_angle *= -1
+            else:
+                delta_angle = -ANIMAL_MOVE_ANGLE
 
         """ move in the direction of the synapse value """
         self.move(delta_angle)
@@ -144,14 +109,29 @@ class Animal(Entity):
         """ check if we've encountered food; if so, eat it """
         self.eat_food()
 
-    def get_current_smell(self):
-        """ gets the current smell strength of the animal """
-        smells = [food.strength * pow(
-                e, -(((self.x - food.x) / self.W) ** 2 + ((self.y - food.y) / self.H) ** 2)
-            )
-            for food in self.food]
+    def get_nearest_vector(self):
+        """ gets the normalised vector from the animal to the nearest bit of
+        food, for input to the neural network """
+        if len(self.food) == 0:
+            return [1, 0]
 
-        return sum(smells)
+        min_distance = -1
+        min_key = -1
+
+        for (i, food) in enumerate(self.food):
+            distance = (self.x - food.x) ** 2 + (self.y - food.y) ** 2
+
+            if min_distance == -1 or distance < min_distance:
+                min_distance = distance
+
+                min_key = i
+
+        distance = sqrt(min_distance)
+
+        return [
+                (self.food[min_key].x - self.x) / distance,
+                (self.food[min_key].y - self.y) / distance
+            ]
 
     def eat_food(self):
         """ eats food if we're on top of it (defined as within a certain small distance) """
