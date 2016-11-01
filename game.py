@@ -3,7 +3,7 @@
 import pdb
 import sys
 import select
-from math import sin, cos, floor
+from math import sin, cos, floor, pi
 from random import random, randint
 import time
 
@@ -133,7 +133,7 @@ class Environment(object):
         """ kill the worst third of the animals """
         self.animals.sort(key = lambda x: x.num_food)
 
-        del self.animals[:floor(len(self.animals) / 2)]
+        del self.animals[:len(self.animals) - CLONE_NUM]
 
         self.breed()
 
@@ -141,39 +141,31 @@ class Environment(object):
         """ combine the remaining animals in pairs """
         num_animals = len(self.animals)
 
-        a1 = self.animals[-1]
-        a2 = self.animals[-2]
+        best = self.animals[-CLONE_NUM:]
 
         for i in range(ENV_N_ANIMALS - num_animals):
-            #a1 = self.animals[randint(0, num_animals - 1)]
-            #a2 = self.animals[randint(0, num_animals - 1)]
+            a1 = best[i % 5]
 
-            child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
+            child = Animal(a1.x, a1.y, self.W, self.H, self.food, True)
 
-            """ combine and mutate children """
+            """ mutate child from parent """
             for i in range(NUM_HIDDEN_NEURONS):
                 child.neurons_hidden[i].weight = [
-                        child.seed() if random() < MUTATION_RATE else 0.5 * (
-                            a1.neurons_hidden[i].weight[j] + a2.neurons_hidden[i].weight[j]
-                        )
+                        child.seed() if random() < MUTATION_RATE else a1.neurons_hidden[i].weight[j]
                         for j in range(NUM_INPUTS)
                     ]
 
-                child.neurons_hidden[i].bias = child.seed() if random() < MUTATION_RATE else 0.5 * (
-                        a1.neurons_hidden[i].bias + a2.neurons_hidden[i].bias
-                    )
+                child.neurons_hidden[i].bias = child.seed() if random() < MUTATION_RATE else a1.neurons_hidden[i].bias
 
             for i in range(NUM_OUTPUTS):
                 child.neurons_output[i].weight = [
-                        child.seed() if random() < MUTATION_RATE else 0.5 * (
-                            a1.neurons_output[i].weight[j] + a2.neurons_output[i].weight[j]
-                        )
+                        child.seed() if random() < MUTATION_RATE else a1.neurons_output[i].weight[j]
                         for j in range(NUM_HIDDEN_NEURONS)
                     ]
 
-                child.neurons_output[i].bias = child.seed() if random() < MUTATION_RATE else 0.5 * (
-                        a1.neurons_output[i].bias + a2.neurons_output[i].bias
-                    )
+                child.neurons_output[i].bias = child.seed() if random() < MUTATION_RATE else a1.neurons_output[i].bias
+
+            child.orientation += pi / 4
 
             self.animals.append(child)
 
