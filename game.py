@@ -13,12 +13,12 @@ from learn import Entity, Animal, Food
 
 SIMULATION_SPEED = 0.0001 # seconds
 CULL_PERIOD = 300
-VISUALISE = False
+VISUALISE = True
 
 ENV_WIDTH = 500
 ENV_HEIGHT = 500
-ENV_N_FOOD = 5
-ENV_N_ANIMALS = 2
+ENV_N_FOOD = 50
+ENV_N_ANIMALS = 10
 
 MUTATION_RATE = 0.1
 
@@ -59,15 +59,15 @@ class Environment(object):
     def draw_display(self):
         """ displays the current environment state in the window """
         self.canvas.delete("all")
-        
+
         for food in self.food:
             self.draw_food(food)
-            
+
         for animal in self.animals:
             self.draw_animal(animal)
 
         self.draw_gui()
-        
+
         self.window.update_idletasks()
         self.window.update()
 
@@ -103,13 +103,13 @@ class Environment(object):
 
     def draw_gui(self):
         w = tkinter.Label(self.canvas, text="GENERATION {}".format(self.generation), fg='white', bg='black')
-        w.place(x=0,y=0)
-        
+        w.place(x = 0, y = 0)
+
 
     def generate(self):
         """ start a generation """
         self.time = 0
-       
+
         print("Generation %d" % self.generation)
         self.generation += 1
 
@@ -163,13 +163,13 @@ class Environment(object):
                 child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
 
                 """ combine and mutate children """
-                child.neuron_out_rotation.apply_weight([MUTATION_RATE * (random() - 0.5) + 0.5 * (
-                    a1.neuron_out_rotation.weight[i] + a2.neuron_out_rotation.weight[i]
-                ) for i in range(child.num_middle_neurons)])
-
-                child.neuron_out_speed.apply_weight([MUTATION_RATE * (random() - 0.5) + 0.5 * (
-                    a1.neuron_out_speed.weight[i] + a2.neuron_out_speed.weight[i]
-                ) for i in range(child.num_middle_neurons)])
+                for i in range(child.num_input_neurons):
+                    child.neurons_input[i].apply_weight([
+                        MUTATION_RATE * (random() - 0.5) + 0.5 * (
+                            a1.neurons_input[i].weight[j] + a2.neurons_input[i].weight[j]
+                        )
+                        for j in range(child.num_output_neurons)
+                    ])
 
                 self.animals.append(child)
             i += 1

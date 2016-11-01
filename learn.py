@@ -4,9 +4,13 @@ from random import random
 
 from neuron import Neuron
 
-NUM_MIDDLE_NEURONS = 20
+NUM_INPUT_NEURONS = 20
+NUM_OUTPUT_NEURONS = 2 # direction, speed
 
-ANIMAL_MOVE_SPEED = 5
+ANIMAL_MOVE_SPEED = 3
+ANIMAL_MOVE_SPEED_MAX = 10
+ANIMAL_MOVE_SPEED_MIN = 0
+
 ANIMAL_MOVE_MAX_ANGLE = pi / 4
 
 NUM_CHILDREN = 1
@@ -40,41 +44,24 @@ class Animal(Entity):
         self.neural_bias = 0
 
         """ NEURAL NETWORK STRUCTURE DEFINITION """
-        self.num_middle_neurons = NUM_MIDDLE_NEURONS
+        self.num_input_neurons = NUM_INPUT_NEURONS
+        self.num_output_neurons = NUM_OUTPUT_NEURONS
 
         """ NEURAL NETWORK: INPUT """
-        """ create an input neuron, initialised with random weight """
-        self.neuron_input = Neuron([1], self.neural_bias)
-
-        """ NEURAL NETWORK: HIDDEN LAYER """
-        seed_rotation = 0 if self.is_child else random()
-        seed_speed = 0 if self.is_child else random()
-
-        self.neuron_rotation    = Neuron([1], self.neural_bias) # rotation
-        self.neuron_speed       = Neuron([1], self.neural_bias) # speed
-
-        """ middle neurons handle input from both rotation and speed neurons """
-        """ each middle neuron is weighted staticly towards either speed or rotation """
-        self.neurons_middle = [
-                Neuron([
-                    1 - i / (self.num_middle_neurons - 1),
-                    i / (self.num_middle_neurons - 1)
-                ], self.neural_bias)
-                for i in range(self.num_middle_neurons)
+        """ each input neuron is dynamically weighted towards either speed or rotation """
+        self.neurons_input = [
+                Neuron(
+                    [self.weight_seed() for j in range(self.num_output_neurons)],
+                    self.neural_bias
+                )
+                for i in range(self.num_input_neurons)
             ]
 
         """ NEURAL NETWORK: OUTPUT """
-        weights_rotation = []
-        for i in range(self.num_middle_neurons):
-            weights_rotation.append(self.weight_seed())
-
-        self.neuron_out_rotation = Neuron(weights_rotation, self.neural_bias)
-
-        weights_speed = []
-        for i in range(self.num_middle_neurons):
-            weights_speed.append(self.weight_seed())
-
-        self.neuron_out_speed = Neuron(weights_speed, self.neural_bias)
+        self.neurons_output = [
+                Neuron([1 for i in range(self.num_input_neurons)], self.neural_bias)
+                for j in range(self.num_output_neurons)
+            ]
 
         """ number of food eaten in this generation by this animal """
         self.num_food = 0
@@ -87,37 +74,29 @@ class Animal(Entity):
     def weight_seed(self):
         return 1 if self.is_child else random() - 0.5
 
-    def fire_neurons(self, delta, i):
-        """ inputs delta into the neural network, gets output """
+    def fire_neurons(self, input_values, input_ranges, i):
+        """ fire the neural network with input values """
 
-        """
-        delta is the actual smell difference;
-        it must be normalised between -1 and 1
+        """ first, normalise the input values between -1 and 1 """
+        input_normalised = [-1 + 2 * (value - input_ranges[k][0]) /
+                (input_ranges[k][1] - input_ranges[k][0])
+                for (k, value) in enumerate(input_values)]
 
-        the maximum theoretical "jump" is from right next to all the food particles
-        (if they are on top of each other) to a point arbitrarily far from all the
-        food particles (or vice versa)
-        """
-        max_delta = sum([food.strength for food in self.food])
-        min_delta = 0#-max_delta
+        """ input the input values into the input neurons, get output """
+        output_layer0 = [
+                self.neurons_input[k].output(input_normalised)
+                for k in range(self.num_input_neurons)]
 
-        delta_norm = -1 + 2 * (delta - min_delta) / (max_delta - min_delta)
-
-        first_input = self.neuron_input.output([delta_norm])
-
-        first_out_rotation  = self.neuron_rotation.output([first_input])
-        first_out_speed     = self.neuron_speed.output([first_input])
-
-        mid_out = [self.neurons_middle[i].output([first_out_rotation, first_out_speed])
-                for i in range(self.num_middle_neurons)]
-
-        last_out_rotation   = self.neuron_out_rotation.output(mid_out)
-        last_out_speed      = self.neuron_out_speed.output(mid_out)
+        """ feed the output from the input neurons, into the output neurons """
+        output = [
+                self.neurons_output[k].output(output_layer0)
+                for k in range(self.num_output_neurons)]
 
         if i == 0:
-            print("%0.2f -> %0.20f" % (delta, last_out_rotation))
+            pass#print("%0.2f -> %0.20f" % (delta, last_out_rotation))
 
-        return last_out_rotation, last_out_speed
+        """ return this final output list """
+        return output
 
     def input(self, i):
         """
@@ -130,14 +109,32 @@ class Animal(Entity):
 
         """ use the difference between the smell now and the smell before,
         to determine the new angle """
-        smell_delta = smell# - self.smell
+        smell_delta = smell - self.smell
+
+        input_values = [smell, smell_delta]
+
+        """ find input ranges for normalisation """
+        input_ranges = []
+
+        """ the maximum possible smell is zero distance from all the food
+        particles, all stacked on top of each other (unlikely, but possible) """
+        max_smell = sum([food.strength for food in self.food])
+
+        """ the minimum possible smell is arbitrarily far from all food particles """
+        min_smell = 0
+
+        """ range for smell """
+        input_ranges.append([min_smell, max_smell])
+
+        """ range for smell_delta (consider a jump from max to min (0) or vice versa) """
+        input_ranges.append([-max_smell, max_smell])
 
         """ open fire! """
-        neuron_out_rotation, neuron_out_speed = self.fire_neurons(smell_delta, i)
+        out_rotation, out_speed = self.fire_neurons(input_values, input_ranges, i)
 
-        delta_angle = ANIMAL_MOVE_MAX_ANGLE * (2 * neuron_out_rotation - 1)
+        delta_angle = 0#ANIMAL_MOVE_MAX_ANGLE * (2 * out_rotation - 1)
 
-        self.speed += neuron_out_speed / 1000
+        self.speed += out_speed / 1000
 
         self.smell = smell
 
