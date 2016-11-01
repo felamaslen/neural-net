@@ -11,7 +11,7 @@ from learn import Entity, Animal, Food
 
 
 
-SIMULATION_SPEED = 0.0001 # seconds
+SIMULATION_SPEED = 0.001 # seconds
 CULL_PERIOD = 300
 VISUALISE = True
 
@@ -59,12 +59,12 @@ class Environment(object):
     def draw_display(self):
         """ displays the current environment state in the window """
         self.canvas.delete("all")
+        if VISUALISE:
+            for food in self.food:
+                self.draw_food(food)
 
-        for food in self.food:
-            self.draw_food(food)
-
-        for animal in self.animals:
-            self.draw_animal(animal)
+            for animal in self.animals:
+                self.draw_animal(animal)
 
         self.draw_gui()
 
@@ -137,8 +137,7 @@ class Environment(object):
             i = 1
 
         """ redraw the display, as the state changed """
-        if VISUALISE:
-            self.draw_display()
+        self.draw_display()
 
     def cull(self):
         """ kill the worst third of the animals """
