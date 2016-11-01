@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import sys
-from math import sin, cos
+from math import sin, cos, floor
 from random import random
 import time
 
@@ -128,8 +128,10 @@ class Environment(object):
         self.draw_display()
 
     def cull(self):
-        """ remove animals that have no food """
-        self.animals = [animal for animal in self.animals if animal.num_food > 0]
+        """ kill the half of the animals which performed the worst """
+        self.animals.sort(key = lambda x: x.num_food)
+
+        del self.animals[:floor(len(self.animals) / 2)]
 
         num_animals = len(self.animals)
         for i in range(num_animals):
