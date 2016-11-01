@@ -118,7 +118,7 @@ class Animal(Entity):
 
         """ the maximum possible smell is zero distance from all the food
         particles, all stacked on top of each other (unlikely, but possible) """
-        max_smell = sum([food.strength for food in self.food])
+        max_smell = max(sum([food.strength for food in self.food]), 1)
 
         """ the minimum possible smell is arbitrarily far from all food particles """
         min_smell = 0
@@ -132,7 +132,7 @@ class Animal(Entity):
         """ open fire! """
         out_rotation, out_speed = self.fire_neurons(input_values, input_ranges, i)
 
-        delta_angle = 0#ANIMAL_MOVE_MAX_ANGLE * (2 * out_rotation - 1)
+        delta_angle = ANIMAL_MOVE_MAX_ANGLE * (2 * out_rotation - 1)
 
         self.speed += out_speed / 1000
 

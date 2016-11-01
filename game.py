@@ -2,7 +2,7 @@
 
 import sys
 from math import sin, cos, floor
-from random import random
+from random import random, randint
 import time
 
 import tkinter
@@ -11,14 +11,14 @@ from learn import Entity, Animal, Food
 
 
 
-SIMULATION_SPEED = 0.001 # seconds
+SIMULATION_SPEED = 0.01 # seconds
 CULL_PERIOD = 300
 VISUALISE = True
 
 ENV_WIDTH = 500
 ENV_HEIGHT = 500
 ENV_N_FOOD = 50
-ENV_N_ANIMALS = 10
+ENV_N_ANIMALS = 20
 
 MUTATION_RATE = 0.1
 
@@ -43,7 +43,7 @@ class Environment(object):
         self.food = []
 
         """ defines the animals in the environment """
-        self.generate_animals()
+        self.animals = self.generate_animals()
 
         """ graphics window """
         self.window = tkinter.Tk()
@@ -59,10 +59,11 @@ class Environment(object):
     def draw_display(self):
         """ displays the current environment state in the window """
         self.canvas.delete("all")
+
         if VISUALISE:
             for food in self.food:
                 self.draw_food(food)
-
+                
             for animal in self.animals:
                 self.draw_animal(animal)
 
@@ -102,9 +103,10 @@ class Environment(object):
                 fill = c_head)
 
     def draw_gui(self):
+        '''draws the gui'''
         w = tkinter.Label(self.canvas, text="GENERATION {}".format(self.generation), fg='white', bg='black')
-        w.place(x = 0, y = 0)
 
+        w.place(x = 0, y = 0)
 
     def generate(self):
         """ start a generation """
@@ -115,7 +117,7 @@ class Environment(object):
 
         """ generate random food """
         del self.food[:]
-        self.generate_food()
+        self.food += self.generate_food()
 
         for i in range(CULL_PERIOD):
             self.simulate()
@@ -150,37 +152,31 @@ class Environment(object):
     def breed(self):
         """ combine the remaining animals in pairs """
         num_animals = len(self.animals)
-        i = 0
-        for animal in self.animals:
-            if i > num_animals - 2:
-                break
 
-            if i % 2 == 0:
-                a1 = self.animals[i]
-                a2 = self.animals[i + 1]
+        for i in range(ENV_N_ANIMALS-num_animals):
+            a1 = self.animals[randint(0, num_animals-1)]
+            a2 = self.animals[randint(0, num_animals-1)]
+            
+            child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
 
-                child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
+            """ combine and mutate children """
+            for i in range(child.num_input_neurons):
+                child.neurons_input[i].apply_weight([
+                    MUTATION_RATE * (random() - 0.5) + 0.5 * (
+                        a1.neurons_input[i].weight[j] + a2.neurons_input[i].weight[j]
+                    )
+                    for j in range(child.num_output_neurons)
+                ])
 
-                """ combine and mutate children """
-                for i in range(child.num_input_neurons):
-                    child.neurons_input[i].apply_weight([
-                        MUTATION_RATE * (random() - 0.5) + 0.5 * (
-                            a1.neurons_input[i].weight[j] + a2.neurons_input[i].weight[j]
-                        )
-                        for j in range(child.num_output_neurons)
-                    ])
-
-                self.animals.append(child)
-            i += 1
+            self.animals.append(child)
 
     def generate_food(self):
         """ generates random food particles (run once per generation) """
-
         num_food = ENV_N_FOOD
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_food)]
 
-        self.food += [Food(x, y, self.W, self.H) for (x, y) in pos]
+        return [Food(x, y, self.W, self.H) for (x, y) in pos]
 
     def generate_animals(self):
         """ generates random animals on start (only called once) """
@@ -188,7 +184,7 @@ class Environment(object):
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_animals)]
 
-        self.animals = [Animal(x, y, self.W, self.H, self.food) for (x, y) in pos]
+        return [Animal(x, y, self.W, self.H, self.food) for (x, y) in pos]
 
 """ new environment """
 env = Environment()
