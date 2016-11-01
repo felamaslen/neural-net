@@ -26,7 +26,7 @@ class Animal(Entity):
         self.orientation = 0
 
         """ initialise speed with a randomised value """
-        self.speed = ANIMAL_MOVE_SPEED * 0.5 * (1 + random())
+        self.speed = ANIMAL_MOVE_SPEED
 
         self.neural_bias = 0
 

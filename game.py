@@ -132,9 +132,12 @@ class Environment(object):
         """ combine the remaining animals in pairs """
         num_animals = len(self.animals)
 
-        for i in range(ENV_N_ANIMALS-num_animals):
-            a1 = self.animals[randint(0, num_animals-1)]
-            a2 = self.animals[randint(0, num_animals-1)]
+        a1 = self.animals[-1]
+        a2 = self.animals[-2]
+
+        for i in range(ENV_N_ANIMALS - num_animals):
+            #a1 = self.animals[randint(0, num_animals - 1)]
+            #a2 = self.animals[randint(0, num_animals - 1)]
 
             child = Animal(0.5 * (a1.x + a2.x), 0.5 * (a1.y + a2.y), self.W, self.H, self.food, True)
 
@@ -147,6 +150,10 @@ class Environment(object):
                         for j in range(NUM_INPUTS)
                     ]
 
+                child.neurons_hidden[i].bias = child.seed() if random() < MUTATION_RATE else 0.5 * (
+                        a1.neurons_hidden[i].bias + a2.neurons_hidden[i].bias
+                    )
+
             for i in range(NUM_OUTPUTS):
                 child.neurons_output[i].weight = [
                         child.seed() if random() < MUTATION_RATE else 0.5 * (
@@ -154,6 +161,10 @@ class Environment(object):
                         )
                         for j in range(NUM_HIDDEN_NEURONS)
                     ]
+
+                child.neurons_output[i].bias = child.seed() if random() < MUTATION_RATE else 0.5 * (
+                        a1.neurons_output[i].bias + a2.neurons_output[i].bias
+                    )
 
             self.animals.append(child)
 
