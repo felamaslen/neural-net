@@ -1,12 +1,14 @@
 from math import e
 
-def sigma(z):
-    return 1 / (1 + pow(e, -max(-700, z)))
-
 class Neuron(object):
     def __init__(self, weight, bias):
         self.weight = self.apply_weight(weight)
         self.bias = bias
+
+    @staticmethod
+    def sigma(z):
+        return 1 / (1 + pow(e, -max(-700, z)))
+
 
     def apply_weight(self, weight):
         """ apply normalised weights """
@@ -16,6 +18,6 @@ class Neuron(object):
 
     def output(self, x):
         """ weights should be normalised """
-        return sigma(sum(self.weight[i] * x[i] for i in range(len(self.weight))) + self.bias)
+        return self.sigma(sum(self.weight[i] * x[i] for i in range(len(self.weight))) + self.bias)
 
 
