@@ -1,7 +1,7 @@
 from math import e
 
 def sigma(z):
-    return 1 / (1 + pow(e, -z))
+    return 1 / (1 + pow(e, -max(-700, z)))
 
 class Neuron(object):
     def __init__(self, weight, bias, num_inputs):
