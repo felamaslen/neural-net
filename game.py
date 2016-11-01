@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import sys
 from math import sin, cos
 from random import random
 import time
@@ -8,14 +9,13 @@ import tkinter
 
 from learn import Entity, Animal, Food
 
-ENV_DECISION_TIME = 0.01 # seconds
+ENV_DECISION_TIME = 0.05 # seconds
+CULL_PERIOD = 10 / ENV_DECISION_TIME
 
 ENV_WIDTH = 1000
 ENV_HEIGHT = 1000
 ENV_N_FOOD = 100
 ENV_N_ANIMALS = 20
-
-CULL_PERIOD = 5 / ENV_DECISION_TIME
 
 FOOD_RADIUS = 3
 FOOD_COLOR = "yellow"
@@ -31,6 +31,8 @@ class Environment(object):
         """ defines the 2d bounds of the environment """
         self.W = ENV_WIDTH
         self.H = ENV_HEIGHT
+
+        self.generation = 0
 
         """ defines the location of food particles: array of Food instances """
         self.food = []
@@ -99,12 +101,21 @@ class Environment(object):
         """ start a generation """
         self.time = 0
 
-        while self.time < CULL_PERIOD:
+        print("Generation %d" % self.generation)
+        self.generation += 1
+
+        i = 0
+        while i < CULL_PERIOD:
             self.simulate()
-            self.time += ENV_DECISION_TIME
+            i += 1
             time.sleep(ENV_DECISION_TIME)
 
         self.cull()
+
+        if len(self.animals) == 0:
+            print("You went extinct! :(")
+            sys.exit()
+
         self.generate() # new generation
 
     def simulate(self):
@@ -130,7 +141,7 @@ class Environment(object):
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_food)]
 
-        self.food += [Food(x, y) for (x, y) in pos]
+        self.food += [Food(x, y, self.W, self.H) for (x, y) in pos]
 
     def generate_animals(self):
         """ generates random animals on start (only called once) """
@@ -138,7 +149,7 @@ class Environment(object):
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_animals)]
 
-        self.animals = [Animal(x, y, self.food) for (x, y) in pos]
+        self.animals = [Animal(x, y, self.W, self.H, self.food) for (x, y) in pos]
 
 """ new environment """
 env = Environment()
