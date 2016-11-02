@@ -113,7 +113,7 @@ class Animal(Entity):
         """ gets the normalised vector from the animal to the nearest bit of
         food, for input to the neural network """
         if len(self.food) == 0:
-            return [1, 0]
+            return [0]
 
         min_distance = -1
         min_key = -1
@@ -131,7 +131,7 @@ class Animal(Entity):
 
         angle1 = atan2(y1 - self.y, x1 - self.x)
 
-        return angle1 - self.orientation
+        return [angle1 - self.orientation]
 
     def eat_food(self):
         """ eats food if we're on top of it (defined as within a certain small distance) """
