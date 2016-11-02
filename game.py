@@ -88,7 +88,8 @@ class Environment(object):
 
             self.draw_display()
 
-            #time.sleep(SIMULATION_SPEED)
+            if SIMULATION_SPEED > 0:
+                time.sleep(SIMULATION_SPEED)
             frame += 1
 
             if frame % fps_check_interval == 0:
@@ -130,7 +131,7 @@ class Environment(object):
 
     def spawn_random_organisms(self):
         """ spawns new organisms (plants) at random over time """
-        if random() * (ENV_NUM_PLANTS - len(self.organisms)) / ENV_NUM_PLANTS > 1 - ORGANISM_GEN_RATE:
+        if random() * (ENV_NUM_PLANTS * 5 - len(self.organisms)) / ENV_NUM_PLANTS > 1 - ORGANISM_GEN_RATE:
             self.organisms.append(Organism(
                 random() * self.W, random() * self.H, self.W, self.H, self.organisms
             ))

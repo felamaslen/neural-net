@@ -40,25 +40,17 @@ class Organism(object):
 
         """ energy usage and requirements depend on this """
         self.size   = SIZE_PLANT
-        
+
     def seed(self):
         self.brain.seed_network()
 
     def fire_neurons(self, input_values):
         return self.brain.run(input_values)
 
-    def energy_usage_rate(self):
-        return max(0, (self.size - SIZE_PLANT)) * ENERGY_USAGE_RATE
-
-    def growth_rate(self):
-        return np.log(GROWTH_RATE * self.energy + NEGATIVE_GROWTH_CUTOFF)
-
     def input(self):
-        """ grow the oganism """
-        self.size += self.growth_rate()
-
         """ use energy in the process """
-        self.energy = max(0, self.energy + PHOTOSYNTHESIS_RATE - self.energy_usage_rate())
+        self.energy = max(0,
+                self.energy - self.speed ** 1.5 * ENERGY_SPEED_USAGE - ENERGY_USAGE_RATE)
 
         """ set the speed according to the size """
         self.speed = 0 if self.size <= SIZE_PLANT else self.size / 2
@@ -69,7 +61,11 @@ class Organism(object):
         input_values = self.get_input_vector()
 
         """ open fire! """
-        [direction, turn] = self.fire_neurons(input_values)
+        [direction, turn, grow] = self.fire_neurons(input_values)
+
+        if grow and self.size < MAX_SIZE:
+            """ grow up a bit """
+            self.size += GROWTH_RATE / self.size
 
         """ move in the direction of the synapse value """
         delta_angle = (2 * int(direction) - 1) * ORGANISM_MOVE_ANGLE if turn else 0
@@ -117,7 +113,7 @@ class Organism(object):
                 lambda other: other.size * STOMACH_SIZE >= self.size, self.others
             )))
 
-        return [closest_food, closest_enemy]
+        return [closest_food, closest_enemy, self.energy]
 
     def eat_others(self):
         """ checks if any other organisms can be eaten by this one """
