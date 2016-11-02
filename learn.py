@@ -22,7 +22,7 @@ class Animal(Entity):
     def __init__(self, x, y, W, H, food):
         super(Animal, self).__init__(x, y, W, H)
 
-        self.brain = ANN([1,2])
+        self.brain = ANN(THE_BRAIN, Perceptron)
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = 0

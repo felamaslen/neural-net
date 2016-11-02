@@ -93,36 +93,23 @@ class Environment(object):
 
     def draw_gui(self):
         '''draws the gui'''
-        w = tkinter.Label(self.canvas, text="GENERATION {}".format(self.generation), fg='white', bg='black')
-
+        w = tkinter.Label(self.canvas, text="GENERATION {} FOOD EATEN {}".format(self.generation, ENV_N_FOOD-len(self.food)), fg='white', bg='black')
         w.place(x = 0, y = 0)
 
     def generate(self):
         """ start a generation """
-        self.time = 0
+        while True:
+            self.generation += 1
 
-        self.generation += 1
+            """ generate random food """
+            del self.food[:]
+            self.food += self.generate_food()
 
-        """ generate random food """
-        del self.food[:]
-        self.food += self.generate_food()
-
-        with KeyPoller() as key_poller:
             for i in range(CULL_PERIOD):
                 self.simulate()
 
-                c = key_poller.poll()
-                if c == 'v':
-                    self.visualise = not self.visualise
-                    print("Toggling visualisation mode")
+            self.cull()
 
-        self.cull()
-
-        if len(self.animals) == 0:
-            print("You went extinct! :(")
-            sys.exit()
-
-        self.generate() # new generation
 
     def simulate(self):
         """ input current data to each animal """

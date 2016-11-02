@@ -21,10 +21,7 @@ ANIMAL_HEAD_COLOR   = "red"
 ANIMAL_BODY_LENGTH  = 15
 ANIMAL_BODY_COLOR   = "black"
 
-""" neural network constants """
-NUM_INPUTS = 1
-NUM_OUTPUTS = 2
-NUM_HIDDEN_NEURONS = 30
+THE_BRAIN = [1,3,2]
 
 THRESHOLD_OUTPUT = 0.75
 
