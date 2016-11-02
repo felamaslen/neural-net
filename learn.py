@@ -22,7 +22,7 @@ class Animal(Entity):
     def __init__(self, x, y, W, H, food):
         super(Animal, self).__init__(x, y, W, H)
 
-        self.brain = ANN([1,NUM_HIDDEN_NEURONS,2])
+        self.brain = ANN([1,2])
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = 0
@@ -47,8 +47,6 @@ class Animal(Entity):
 
         """ open fire! """
         [left, right] = self.fire_neurons(input_values)
-        print(left)
-        print(right)
 
         go_left = left > THRESHOLD_OUTPUT and left > right
         go_right = right > THRESHOLD_OUTPUT and right > left

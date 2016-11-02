@@ -156,7 +156,7 @@ class Environment(object):
 
             for o in range(child.brain.layers-1):
                 for m in range(child.brain.sizes[o+1]):
-                    child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
+                    child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights[i] if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
                     child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
 
             self.animals.append(child)
