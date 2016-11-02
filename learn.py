@@ -1,5 +1,6 @@
 import pdb
 from math import sin, cos, atan2, sqrt, pi, e
+import numpy as np
 from random import random
 
 from constants import *
@@ -30,12 +31,13 @@ class Animal(Entity):
         """ initialise speed """
         self.speed = ANIMAL_MOVE_SPEED
 
-        """ number of food eaten in this generation by this animal """
         self.num_food = 0
 
         self.food = food
 
-        self.hunger = ANIMAL_FULLNESS
+        self.fullness = ANIMAL_FULLNESS
+
+        self.growth = 1
 
     def seed(self):
         self.brain.rand_seed()
@@ -45,7 +47,7 @@ class Animal(Entity):
 
     def input(self):
         """ input values """
-        self.hunger -= 1
+        self.fullness -= 1
 
         input_values = [self.get_nearest_vector()]
 
@@ -93,9 +95,14 @@ class Animal(Entity):
             distance = sqrt((item.x - self.x) ** 2 + (item.y - self.y) ** 2)
 
             if distance < FOOD_EAT_DISTANCE:
-                self.hunger += FOOD_SATIATION
-                item.x, item.y = random()*ENV_WIDTH, random()*ENV_HEIGHT
+                self.fullness += FOOD_SATIATION
+
+                item.x, item.y = random() * ENV_WIDTH, random() * ENV_HEIGHT
+
                 self.num_food += 1
+
+                """ grow the animal with exponential decay """
+                self.growth = 1 + np.log(GROWTH_RATE * self.num_food + 1)
 
     def move(self, angle):
         """ turns and moves forward by a set distance """

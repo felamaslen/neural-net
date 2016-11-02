@@ -4,6 +4,7 @@ import pdb
 import sys
 import select
 from math import sin, cos, floor, pi
+import numpy as np
 from random import random, randint
 import time
 
@@ -70,8 +71,9 @@ class Environment(object):
 
     def draw_animal(self, animal):
         """ draw an animal """
-        r_head = ANIMAL_HEAD_RADIUS
-        l_body = ANIMAL_BODY_LENGTH
+
+        r_head = ANIMAL_HEAD_RADIUS * animal.growth
+        l_body = ANIMAL_BODY_LENGTH * animal.growth
 
         c_head = ANIMAL_HEAD_COLOR
 
@@ -92,9 +94,10 @@ class Environment(object):
                 fill = c_head)
 
     def draw_gui(self):
-        '''draws the gui'''
+        """ draws the gui """
         #w = tkinter.Label(self.canvas, text="GENERATION {} FOOD EATEN {}".format(self.generation, ENV_N_FOOD-len(self.food)), fg='white', bg='black')
         #w.place(x = 0, y = 0)
+        pass
 
     def generate(self):
         """ start a generation """
@@ -103,12 +106,12 @@ class Environment(object):
             self.simulate()
             self.draw_display()
 
-
     def simulate(self):
         """ input current data to each animal """
         for thing in self.animals:
             thing.input()
-            if thing.hunger == 0:
+            if thing.fullness == 0:
+                """ kill animals which go hungry """
                 self.animals.remove(thing)
                 child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
                 a1 = self.animals[randint(0,len(self.animals)-1)]
@@ -118,27 +121,6 @@ class Environment(object):
                         child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
 
                 self.animals.append(child)
-
-    def breed(self):
-        """ combine the remaining animals in pairs """
-        num_animals = len(self.animals)
-
-        best = self.animals[-CLONE_NUM:]
-
-        for i in range(CLONE_NUM):
-            self.animals[i].num_food = 0
-
-        for i in range(ENV_N_ANIMALS - num_animals):
-            a1 = best[i % CLONE_NUM]
-
-            child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
-
-            for o in range(child.brain.layers-1):
-                for m in range(child.brain.sizes[o+1]):
-                    child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights[i] if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
-                    child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
-
-            self.animals.append(child)
 
     def generate_food(self):
         """ generates random food particles (run once per generation) """
