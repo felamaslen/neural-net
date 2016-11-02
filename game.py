@@ -133,10 +133,8 @@ class Environment(object):
         self.draw_display()
 
     def cull(self):
-        """ kill the worst third of the animals """
-        self.animals.sort(key = lambda x: x.num_food)
-
-        del self.animals[:len(self.animals) - CLONE_NUM]
+        """ animals die from hunger """
+        self.animals = list(filter(lambda x: x.hunger < ANIMAL_HUNGER_DEATH, self.animals))
 
         self.breed()
 
@@ -144,13 +142,8 @@ class Environment(object):
         """ combine the remaining animals in pairs """
         num_animals = len(self.animals)
 
-        best = self.animals[-CLONE_NUM:]
-
-        for i in range(CLONE_NUM):
-            self.animals[i].num_food = 0
-
         for i in range(ENV_N_ANIMALS - num_animals):
-            a1 = best[i % CLONE_NUM]
+            a1 = self.animals[i % num_animals]
 
             child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
 

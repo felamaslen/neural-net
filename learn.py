@@ -24,6 +24,9 @@ class Animal(Entity):
 
         self.brain = ANN([1,2])
 
+        """ initialise a hunger property """
+        self.hunger = ANIMAL_HUNGER_START
+
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = 0
 
@@ -55,6 +58,9 @@ class Animal(Entity):
 
         """ move in the direction of the synapse value """
         self.move(delta_angle)
+
+        """ increase hunger by 1 """
+        self.hunger += 1
 
         """ check if we've encountered food; if so, eat it """
         self.eat_food()
@@ -91,8 +97,10 @@ class Animal(Entity):
             eaten = distance < FOOD_EAT_DISTANCE
 
             if eaten:
-                self.food.remove(item)
                 self.num_food += 1
+                self.hunger = max(ANIMAL_HUNGER_MIN, self.hunger - item.value)
+
+                self.food.remove(item)
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
@@ -119,5 +127,8 @@ class Food(Entity):
         super(Food, self).__init__(x, y, W, H)
 
         self.strength = FOOD_STRENGTH
+
+        """ determines how much this food satiates the animal """
+        self.value = 5
 
 
