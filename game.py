@@ -21,8 +21,6 @@ class Environment(object):
         self.W = ENV_WIDTH
         self.H = ENV_HEIGHT
 
-        self.visualise = VISUALISE
-
         """ graphics window """
         self.window = tkinter.Tk()
 
@@ -38,7 +36,7 @@ class Environment(object):
         """ displays the current environment state in the window """
         self.canvas.delete(tkinter.ALL)
         #canvas.delete(Tkinter.ALL)
-        if self.visualise:
+        if VISUALISE:
             for food in self.food:
                 self.draw_food(food)
 
@@ -67,7 +65,7 @@ class Environment(object):
 
         c_head = ANIMAL_HEAD_COLOR
 
-        c_head = "#%02x0000" % (min(255,animal.hunger))
+        c_head = "#%02x0000" % (min(255,animal.fullness))
 
         c_body = ANIMAL_BODY_COLOR
 
@@ -87,19 +85,23 @@ class Environment(object):
         """ main loop """
         self.food = []
         self.animals = self.generate_animals()
+        self.framecounter = 0
+        prev_time = time.time()
         while True:
-            prev_time = time.time()
             self.generate_food()
             self.handle_animals()
             self.draw_display()
+            self.framecounter += 1
+            if not self.framecounter%100:
+                print(100//(time.time()-prev_time))
+                prev_time = time.time()
             #time.sleep(SIMULATION_SPEED)
-            print(1/(time.time()-prev_time))
 
     def handle_animals(self):
         """ input current data to each animal """
         for thing in self.animals:
             thing.input()
-            if thing.hunger == 0:
+            if thing.fullness == 0:
                 self.animals.remove(thing)
                 child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
                 a1 = self.animals[randint(0,len(self.animals)-1)]
@@ -111,7 +113,7 @@ class Environment(object):
                 self.animals.append(child)
 
     def generate_food(self):
-        if random()*(20-len(self.food))/20 > 1-FOOD_GEN_RATE:
+        if random()*(FOOD_MAX-len(self.food))/FOOD_MAX > 1-FOOD_GEN_RATE:
             self.food.append(Food(random() * self.W, random() * self.H, self.W, self.H))
 
     def generate_animals(self):

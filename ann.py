@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import numpy as np
+import pickle
 
 class Neuron(object):
     def __init__(self, weights, bias):
@@ -39,13 +40,16 @@ class ANN(object):
         self.neurontype = neurontype
         self.neurons = [[self.neurontype([0]*self.sizes[i-1], 0) for j in range(self.sizes[i])] for i in range(1, self.layers)]
 
-    def rand_seed(self):
+    def seed_network(self):
         for o in range(self.layers-1):                                          #for each layer of neurons
             for m in range(self.sizes[o+1]):                                    #for each neuron in the layer
-                self.neurons[o][m].weights = np.random.randn(self.sizes[o])
-                self.neurons[o][m].bias = np.random.randn()
+                self.seed_neuron(o, m)
 
-    def feed_forward(self, inputs):
+    def seed_neuron(self, layer, index, weightindex = 0):
+        self.neurons[layer][index].weights = np.random.randn(self.sizes[layer])
+        self.neurons[layer][index].bias = np.random.randn()
+
+    def run(self, inputs):
         prev_outputs = np.array(inputs)
         for k in range(self.layers-1):
             prev_outputs = np.array([self.neurons[k][l].get_output(prev_outputs) for l in range(self.sizes[k+1])])

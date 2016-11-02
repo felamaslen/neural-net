@@ -35,27 +35,27 @@ class Animal(Entity):
 
         self.food = food
 
-        self.hunger = ANIMAL_FULLNESS
+        self.fullness = ANIMAL_FULLNESS
 
     def seed(self):
-        self.brain.rand_seed()
+        self.brain.seed_network()
 
     def fire_neurons(self, input_values):
-        return self.brain.feed_forward(input_values)
+        return self.brain.run(input_values)
 
     def input(self):
         """ input values """
-        self.hunger -= 1
+        self.fullness -= 1
 
         input_values = [self.get_nearest_vector()]
 
         """ open fire! """
-        [left] = self.fire_neurons(input_values)
+        [left, turn] = self.fire_neurons(input_values)
 
         #go_left = left > THRESHOLD_OUTPUT and left > right
         #go_right = right > THRESHOLD_OUTPUT and right > left
-        delta_angle = (int(left)*2-1) * ANIMAL_MOVE_ANGLE
-
+        
+        delta_angle = (int(left)*2-1) * ANIMAL_MOVE_ANGLE if turn else 0
         """ move in the direction of the synapse value """
         self.move(delta_angle)
 
@@ -92,8 +92,11 @@ class Animal(Entity):
             distance = sqrt((item.x - self.x) ** 2 + (item.y - self.y) ** 2)
 
             if distance < FOOD_EAT_DISTANCE:
-                self.hunger += FOOD_SATIATION
-                self.hunger = min(STOMACH_SIZE, self.hunger)
+                self.fullness += FOOD_SATIATION
+
+                #self.fullness = min(
+                #        STOMACH_SIZE, self.fullness + int(FOOD_SATIATION // self.growth)
+                #    )
                 self.food.remove(item)
                 self.num_food += 1
 
