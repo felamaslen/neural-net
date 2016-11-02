@@ -1,6 +1,6 @@
 # neural-net
 Neural network project
 
-Eventually, this will be a natural selection game using neural networks
+## CHANGELOG:
 
-But right now, it does basically nothing. Check later for more!
+* v0.0.1: simple learning algorithm for animals eating food
