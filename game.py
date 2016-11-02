@@ -152,7 +152,7 @@ class Environment(object):
         for i in range(ENV_N_ANIMALS - num_animals):
             a1 = best[i % CLONE_NUM]
 
-            child = Animal(a1.x, a1.y, self.W, self.H, self.food, True)
+            child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food, True)
 
             """ mutate child from parent """
             for i in range(NUM_HIDDEN_NEURONS):
