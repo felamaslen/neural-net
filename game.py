@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-''' TODO: - Implement Continuous Time -  - '''
+''' TODO: - Implement Continuous Time - Implement Predators - Bad food - Clean up code (imports) - Mutations based on Gaussian Distribution'''
 import pdb
 import sys
 import select
