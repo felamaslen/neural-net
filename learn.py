@@ -8,8 +8,12 @@ from neuron import Neuron
 
 from ann import ANN, Perceptron
 
-class Entity(object):
-    def __init__(self, x, y, W, H):
+class Organism(object):
+    """ defines an organism, which is a "species" containing a neural network """
+
+    """ it starts out as a "plant", growing constantly wrt time, then once it reaches
+    a certain size, it may start to move and eat other organisms """
+    def __init__(self, x, y, W, H, others):
         """ the position of the entity in the environment """
         self.x = x
         self.y = y
@@ -18,26 +22,24 @@ class Entity(object):
         self.W = W
         self.H = H
 
-class Animal(Entity):
-    """ defines an animal, which is a "species" containing a neural network """
-    def __init__(self, x, y, W, H, food):
-        super(Animal, self).__init__(x, y, W, H)
-
         self.brain = ANN(THE_BRAIN, Perceptron)
 
-        """ the orientation of the animal in the environment (range: 0 to 2pi) """
+        """ the orientation of the organism in the environment (range: 0 to 2pi) """
         self.orientation = 0
 
-        """ initialise speed """
-        self.speed = ANIMAL_MOVE_SPEED
+        """ other oganisms in the environment """
+        self.others = others
 
-        self.num_food = 0
+        """ intialise with the size and characteristics of a plant """
 
-        self.food = food
+        """ initialise speed (0 for plants) """
+        self.speed = 0
 
-        self.fullness = ANIMAL_FULLNESS
+        """ if this reaches zero, the organism dies """
+        self.energy = INITIAL_ENERGY
 
-        self.growth = 1
+        """ energy usage and requirements depend on this """
+        self.size   = SIZE_PLANT
 
     def seed(self):
         self.brain.rand_seed()
@@ -45,67 +47,98 @@ class Animal(Entity):
     def fire_neurons(self, input_values):
         return self.brain.feed_forward(input_values)
 
-    def input(self):
-        """ input values """
-        self.fullness -= 1
+    def energy_usage_rate(self):
+        return max(0, (self.size - SIZE_PLANT)) * ENERGY_USAGE_RATE
 
-        input_values = [self.get_nearest_vector()]
+    def growth_rate(self):
+        return np.log(GROWTH_RATE * self.energy + NEGATIVE_GROWTH_CUTOFF)
+
+    def input(self):
+        """ grow the oganism """
+        self.size += self.growth_rate()
+
+        """ use energy in the process """
+        self.energy = max(0, self.energy + PHOTOSYNTHESIS_RATE - self.energy_usage_rate())
+
+        """ set the speed according to the size """
+        self.speed = 0 if self.size <= SIZE_PLANT else self.size / 2
+
+        """ input values """
+
+        """ get input vector for the brain """
+        input_values = self.get_input_vector()
 
         """ open fire! """
-        [left] = self.fire_neurons(input_values)
-
-        #go_left = left > THRESHOLD_OUTPUT and left > right
-        #go_right = right > THRESHOLD_OUTPUT and right > left
-        delta_angle = (int(left)*2-1) * ANIMAL_MOVE_ANGLE
+        [direction, turn] = self.fire_neurons(input_values)
 
         """ move in the direction of the synapse value """
+        delta_angle = (2 * int(direction) - 1) * ORGANISM_MOVE_ANGLE if turn else 0
+
         self.move(delta_angle)
 
         """ check if we've encountered food; if so, eat it """
-        self.eat_food()
+        self.eat_others()
 
-    def get_nearest_vector(self):
-        """ gets the normalised vector from the animal to the nearest bit of
-        food, for input to the neural network """
-        if len(self.food) == 0:
-            return [0]
+    def get_closest(self, others):
+        """ returns the angle to the closest organism in others """
+        angle = 0
 
-        min_distance = -1
-        min_key = -1
+        if len(others) > 0:
+            min_distance = -1
+            min_key = -1
 
-        for i, food in enumerate(self.food):
-            distance = (self.x - food.x) ** 2 + (self.y - food.y) ** 2
+            for (i, other) in enumerate(others):
+                if not other is self:
+                    distance = (self.x - other.x) ** 2 + (self.y - other.y) ** 2
 
-            if min_distance == -1 or distance < min_distance:
-                min_distance = distance
+                    if min_distance == -1 or distance < min_distance:
+                        min_distance = distance
+                        min_key = i
 
-                min_key = i
+            x1 = others[min_key].x
+            y1 = others[min_key].y
 
-        x1 = self.food[min_key].x
-        y1 = self.food[min_key].y
+            angle = atan2(y1 - self.y, x1 - self.x)
 
-        angle1 = atan2(y1 - self.y, x1 - self.x)
+        return angle - self.orientation
 
-        return [angle1 - self.orientation]
+    def get_input_vector(self):
+        """ gets all the inputs for the brain, based on current parameters """
 
-    def eat_food(self):
-        """ eats food if we're on top of it (defined as within a certain small distance) """
-        for item in self.food:
-            distance = sqrt((item.x - self.x) ** 2 + (item.y - self.y) ** 2)
+        """ get the closest source of food """
+        """ others are food if they can fit in our stomach """
+        closest_food = self.get_closest(list(filter(
+                lambda other: other.size < self.size * STOMACH_SIZE, self.others
+            )))
 
-            if distance < FOOD_EAT_DISTANCE:
-                self.fullness = min(
-                        STOMACH_SIZE, self.fullness + int(FOOD_SATIATION // self.growth)
-                    )
+        """ get the closest enemy """
+        """ others are enemies if we can fit in their stomach """
+        closest_enemy = self.get_closest(list(filter(
+                lambda other: other.size * STOMACH_SIZE >= self.size, self.others
+            )))
 
-                item.x, item.y = random() * ENV_WIDTH, random() * ENV_HEIGHT
+        return [closest_food, closest_enemy]
 
-                self.food.remove(item)
+    def eat_others(self):
+        """ checks if any other organisms can be eaten by this one """
+        stomach_remaining = STOMACH_SIZE * self.size
 
-                self.num_food += 1
+        for other in self.others:
+            if other.size < stomach_remaining and (
+                (other.x - self.x) ** 2 + (other.y - self.y) ** 2 <
+                (self.size / 2) ** 2
+            ):
+                """ this organism fits in our stomach and is close enough to be
+                eaten, so we eat it. """
 
-                """ grow the animal with exponential decay """
-                self.growth = 1 + np.log(GROWTH_RATE * self.num_food + 1)
+                """ put it in our stomach """
+                stomach_remaining -= other.size
+
+                """ digest it """
+                self.energy += DIGESTION_EFFICIENCY * other.energy
+
+                """ remove the eaten item from the others array """
+                self.others.remove(other)
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
@@ -125,10 +158,5 @@ class Animal(Entity):
 
         self.x = new_x
         self.y = new_y
-
-class Food(Entity):
-    """ defines a food particle in the environment (later add taste, health etc. """
-    def __init__(self, x, y, W, H):
-        super(Food, self).__init__(x, y, W, H)
 
 
