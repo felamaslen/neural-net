@@ -87,13 +87,24 @@ class Environment(object):
         """ main loop """
         self.food = []
         self.animals = self.generate_animals()
+
+        frame = 0
+
+        fps_check_interval = 1000
+
+        prev_time = time.time()
+
         while True:
-            prev_time = time.time()
             self.generate_food()
             self.handle_animals()
             self.draw_display()
             #time.sleep(SIMULATION_SPEED)
-            print(1/(time.time()-prev_time))
+            frame += 1
+
+            if frame % fps_check_interval == 0:
+                now = time.time()
+                print("fps: {}".format(fps_check_interval // (now - prev_time)))
+                prev_time = now
 
     def handle_animals(self):
         """ input current data to each animal """
