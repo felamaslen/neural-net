@@ -35,6 +35,8 @@ class Animal(Entity):
 
         self.food = food
 
+        self.hunger = 150
+
     def seed(self):
         self.brain.rand_seed()
 
@@ -43,6 +45,8 @@ class Animal(Entity):
 
     def input(self):
         """ input values """
+        self.hunger -= 1
+
         input_values = [self.get_nearest_vector()]
 
         """ open fire! """
@@ -91,7 +95,8 @@ class Animal(Entity):
             eaten = distance < FOOD_EAT_DISTANCE
 
             if eaten:
-                self.food.remove(item)
+                self.hunger += 300
+                item.x, item.y = random()*ENV_WIDTH, random()*ENV_HEIGHT
                 self.num_food += 1
 
     def move(self, angle):

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+''' TODO: - Implement Continuous Time -  - '''
 import pdb
 import sys
 import select
@@ -75,7 +75,7 @@ class Environment(object):
 
         c_head = ANIMAL_HEAD_COLOR
 
-        c_head = "#%02x0000" % (255 if animal.num_food > 0 else 0)
+        c_head = "#%02x0000" % (animal.num_food)
 
         c_body = ANIMAL_BODY_COLOR
 
@@ -98,34 +98,47 @@ class Environment(object):
 
     def generate(self):
         """ start a generation """
+        self.food += self.generate_food()
         while True:
-            self.generation += 1
+            #self.generation += 1
 
             """ generate random food """
-            del self.food[:]
-            self.food += self.generate_food()
+            #del self.food[:]
+            #self.food += self.generate_food()
 
-            for i in range(CULL_PERIOD):
-                self.simulate()
+            #for i in range(CULL_PERIOD):
+            self.simulate()
 
-            self.cull()
+            #self.cull()
 
 
     def simulate(self):
         """ input current data to each animal """
-        for item in self.animals:
-            item.input()
+        for thing in self.animals:
+            thing.input()
+            if thing.hunger == 0:
+                self.animals.remove(thing)
+                child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
+                self.animals.sort(key = lambda x: x.num_food)
+                a1 = self.animals[-1]
+                for o in range(child.brain.layers-1):
+                    for m in range(child.brain.sizes[o+1]):
+                        child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights[i] if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
+                        child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
+
+                self.animals.append(child)
+
 
         """ redraw the display, as the state changed """
         self.draw_display()
 
-    def cull(self):
+    #def cull(self):
         """ kill the worst third of the animals """
-        self.animals.sort(key = lambda x: x.num_food)
+    #    self.animals.sort(key = lambda x: x.num_food)
 
-        del self.animals[:len(self.animals) - CLONE_NUM]
+    #    del self.animals[:len(self.animals) - CLONE_NUM]
 
-        self.breed()
+   #     self.breed()
 
     def breed(self):
         """ combine the remaining animals in pairs """
