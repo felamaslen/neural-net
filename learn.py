@@ -126,12 +126,12 @@ class Animal(Entity):
 
                 min_key = i
 
-        distance = sqrt(min_distance)
+        x1 = self.food[min_key].x
+        y1 = self.food[min_key].y
 
-        return [
-                (self.food[min_key].x - self.x) / distance,
-                (self.food[min_key].y - self.y) / distance
-            ]
+        angle1 = atan2(y1 - self.y, x1 - self.x)
+
+        return angle1 - self.orientation
 
     def eat_food(self):
         """ eats food if we're on top of it (defined as within a certain small distance) """

@@ -74,6 +74,9 @@ class Environment(object):
         l_body = ANIMAL_BODY_LENGTH
 
         c_head = ANIMAL_HEAD_COLOR
+
+        c_head = "#%02x0000" % (255 if animal.num_food > 0 else 0)
+
         c_body = ANIMAL_BODY_COLOR
 
         """ draw body """
@@ -143,8 +146,11 @@ class Environment(object):
 
         best = self.animals[-CLONE_NUM:]
 
+        for i in range(CLONE_NUM):
+            self.animals[i].num_food = 0
+
         for i in range(ENV_N_ANIMALS - num_animals):
-            a1 = best[i % 5]
+            a1 = best[i % CLONE_NUM]
 
             child = Animal(a1.x, a1.y, self.W, self.H, self.food, True)
 
