@@ -5,6 +5,8 @@ from random import random
 from constants import *
 from neuron import Neuron
 
+from ann import ANN, Perceptron
+
 class Entity(object):
     def __init__(self, x, y, W, H):
         """ the position of the entity in the environment """
@@ -17,39 +19,16 @@ class Entity(object):
 
 class Animal(Entity):
     """ defines an animal, which is a "species" containing a neural network """
-    def __init__(self, x, y, W, H, food, child = False):
+    def __init__(self, x, y, W, H, food):
         super(Animal, self).__init__(x, y, W, H)
 
-        self.is_child = child
+        self.brain = ANN([1,NUM_HIDDEN_NEURONS,2])
 
         """ the orientation of the animal in the environment (range: 0 to 2pi) """
         self.orientation = 0
 
-        """ initialise speed with a randomised value """
+        """ initialise speed """
         self.speed = ANIMAL_MOVE_SPEED
-
-        self.neural_bias = 0
-
-        """ NEURAL NETWORK STRUCTURE DEFINITION """
-        self.num_hidden_neurons = NUM_HIDDEN_NEURONS
-
-        """ hidden layer """
-        self.neurons_hidden = [
-                Neuron(
-                    [self.seed() for j in range(NUM_INPUTS)],
-                    self.seed()
-                )
-                for i in range(self.num_hidden_neurons)
-            ]
-
-        """ output layer """
-        self.neurons_output = [
-                Neuron(
-                    [self.seed() for j in range(self.num_hidden_neurons)],
-                    self.seed()
-                )
-                for i in range(NUM_OUTPUTS)
-            ]
 
         """ number of food eaten in this generation by this animal """
         self.num_food = 0
@@ -57,51 +36,24 @@ class Animal(Entity):
         self.food = food
 
     def seed(self):
-        return 1 if self.is_child else random() - 0.5
+        self.brain.rand_seed()
 
     def fire_neurons(self, input_values):
-        """ fire the neural network with input values """
-
-        """ input the values to the hidden layer, get their outputs """
-        hidden_out = [
-                self.neurons_hidden[k].output(input_values)
-                for k in range(NUM_HIDDEN_NEURONS)
-            ]
-
-        """ input those outputs to the output neurons """
-        out = [
-                self.neurons_output[k].output(hidden_out)
-                for k in range(NUM_OUTPUTS)
-            ]
-
-        """ return this final output list """
-        return out
+        return self.brain.feed_forward(input_values)
 
     def input(self):
-        """
-        this is run once per simulation
-        this function is the entry point to the neural network belonging to this animal
-        """
-
         """ input values """
-        input_values = self.get_nearest_vector()
+        input_values = [self.get_nearest_vector()]
 
         """ open fire! """
-        left, right = self.fire_neurons(input_values)
+        [left, right] = self.fire_neurons(input_values)
+        print(left)
+        print(right)
 
         go_left = left > THRESHOLD_OUTPUT and left > right
         go_right = right > THRESHOLD_OUTPUT and right > left
 
-        delta_angle = 0
-
-        if left > THRESHOLD_OUTPUT:
-            delta_angle = ANIMAL_MOVE_ANGLE
-
-        if right > THRESHOLD_OUTPUT:
-            if right > left:
-                delta_angle *= -1
-            else:
-                delta_angle = -ANIMAL_MOVE_ANGLE
+        delta_angle = (int(go_left) - int(go_right)) * ANIMAL_MOVE_ANGLE
 
         """ move in the direction of the synapse value """
         self.move(delta_angle)
@@ -113,7 +65,7 @@ class Animal(Entity):
         """ gets the normalised vector from the animal to the nearest bit of
         food, for input to the neural network """
         if len(self.food) == 0:
-            return [1, 0]
+            return [0]
 
         min_distance = -1
         min_key = -1

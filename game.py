@@ -152,26 +152,12 @@ class Environment(object):
         for i in range(ENV_N_ANIMALS - num_animals):
             a1 = best[i % CLONE_NUM]
 
-            child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food, True)
+            child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
 
-            """ mutate child from parent """
-            for i in range(NUM_HIDDEN_NEURONS):
-                child.neurons_hidden[i].weight = [
-                        child.seed() if random() < MUTATION_RATE else a1.neurons_hidden[i].weight[j]
-                        for j in range(NUM_INPUTS)
-                    ]
-
-                child.neurons_hidden[i].bias = child.seed() if random() < MUTATION_RATE else a1.neurons_hidden[i].bias
-
-            for i in range(NUM_OUTPUTS):
-                child.neurons_output[i].weight = [
-                        child.seed() if random() < MUTATION_RATE else a1.neurons_output[i].weight[j]
-                        for j in range(NUM_HIDDEN_NEURONS)
-                    ]
-
-                child.neurons_output[i].bias = child.seed() if random() < MUTATION_RATE else a1.neurons_output[i].bias
-
-            child.orientation += pi / 4
+            for o in range(child.brain.layers-1):
+                for m in range(child.brain.sizes[o+1]):
+                    child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
+                    child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
 
             self.animals.append(child)
 
@@ -189,7 +175,12 @@ class Environment(object):
 
         pos = [(random() * self.W, random() * self.H) for i in range(num_animals)]
 
-        return [Animal(x, y, self.W, self.H, self.food) for (x, y) in pos]
+        animallist = [Animal(x, y, self.W, self.H, self.food) for (x, y) in pos]
+
+        for i in animallist:
+            i.seed()
+
+        return animallist
 
 """ new environment """
 env = Environment()

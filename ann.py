@@ -40,10 +40,10 @@ class ANN(object):
         self.neurons = [[self.neurontype([0]*self.sizes[i-1], 0) for j in range(self.sizes[i])] for i in range(1, self.layers)]
 
     def rand_seed(self):
-        for o in range(1, self.layers):
-            for m in range(self.sizes[o]):
-                self.neurons[o-1][m].weights = np.random.randn(self.sizes[o-1])
-                self.neurons[o-1][m].bias = np.random.randn()
+        for o in range(self.layers-1):                                          #for each layer of neurons
+            for m in range(self.sizes[o+1]):                                    #for each neuron in the layer
+                self.neurons[o][m].weights = np.random.randn(self.sizes[o])
+                self.neurons[o][m].bias = np.random.randn()
 
     def feed_forward(self, inputs):
         prev_outputs = np.array(inputs)
