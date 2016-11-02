@@ -50,12 +50,11 @@ class Animal(Entity):
         input_values = [self.get_nearest_vector()]
 
         """ open fire! """
-        [left, right] = self.fire_neurons(input_values)
+        [left] = self.fire_neurons(input_values)
 
-        go_left = left > THRESHOLD_OUTPUT and left > right
-        go_right = right > THRESHOLD_OUTPUT and right > left
-
-        delta_angle = (int(go_left) - int(go_right)) * ANIMAL_MOVE_ANGLE
+        #go_left = left > THRESHOLD_OUTPUT and left > right
+        #go_right = right > THRESHOLD_OUTPUT and right > left
+        delta_angle = (int(left)*2-1) * ANIMAL_MOVE_ANGLE
 
         """ move in the direction of the synapse value """
         self.move(delta_angle)
@@ -72,7 +71,7 @@ class Animal(Entity):
         min_distance = -1
         min_key = -1
 
-        for (i, food) in enumerate(self.food):
+        for i, food in enumerate(self.food):
             distance = (self.x - food.x) ** 2 + (self.y - food.y) ** 2
 
             if min_distance == -1 or distance < min_distance:
@@ -94,7 +93,8 @@ class Animal(Entity):
 
             if distance < FOOD_EAT_DISTANCE:
                 self.hunger += FOOD_SATIATION
-                item.x, item.y = random()*ENV_WIDTH, random()*ENV_HEIGHT
+                self.hunger = min(STOMACH_SIZE, self.hunger)
+                self.food.remove(item)
                 self.num_food += 1
 
     def move(self, angle):
@@ -120,7 +120,5 @@ class Food(Entity):
     """ defines a food particle in the environment (later add taste, health etc. """
     def __init__(self, x, y, W, H):
         super(Food, self).__init__(x, y, W, H)
-
-        self.strength = FOOD_STRENGTH
 
 

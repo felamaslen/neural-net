@@ -23,21 +23,13 @@ class Environment(object):
 
         self.visualise = VISUALISE
 
-        self.generation = 0
-
-        """ defines the location of food particles: array of Food instances """
-        self.food = []
-
-        """ defines the animals in the environment """
-        self.animals = self.generate_animals()
-
         """ graphics window """
         self.window = tkinter.Tk()
 
         self.canvas = tkinter.Canvas(self.window, width = self.W, height = self.H)
         self.canvas.pack()
 
-        """ start creating generations """
+        """ start game loop"""
         self.generate()
 
         self.window.mainloop()
@@ -53,7 +45,7 @@ class Environment(object):
             for animal in self.animals:
                 self.draw_animal(animal)
 
-        self.draw_gui()
+        #self.draw_gui()
 
         self.window.update_idletasks()
         self.window.update()
@@ -75,7 +67,7 @@ class Environment(object):
 
         c_head = ANIMAL_HEAD_COLOR
 
-        c_head = "#%02x0000" % (animal.num_food)
+        c_head = "#%02x0000" % (min(255,animal.hunger))
 
         c_body = ANIMAL_BODY_COLOR
 
@@ -91,20 +83,19 @@ class Environment(object):
                 animal.x + r_head, animal.y + r_head,
                 fill = c_head)
 
-    def draw_gui(self):
-        '''draws the gui'''
-        #w = tkinter.Label(self.canvas, text="GENERATION {} FOOD EATEN {}".format(self.generation, ENV_N_FOOD-len(self.food)), fg='white', bg='black')
-        #w.place(x = 0, y = 0)
-
     def generate(self):
-        """ start a generation """
-        self.food += self.generate_food()
+        """ main loop """
+        self.food = []
+        self.animals = self.generate_animals()
         while True:
-            self.simulate()
+            prev_time = time.time()
+            self.generate_food()
+            self.handle_animals()
             self.draw_display()
+            #time.sleep(SIMULATION_SPEED)
+            print(1/(time.time()-prev_time))
 
-
-    def simulate(self):
+    def handle_animals(self):
         """ input current data to each animal """
         for thing in self.animals:
             thing.input()
@@ -119,34 +110,9 @@ class Environment(object):
 
                 self.animals.append(child)
 
-    def breed(self):
-        """ combine the remaining animals in pairs """
-        num_animals = len(self.animals)
-
-        best = self.animals[-CLONE_NUM:]
-
-        for i in range(CLONE_NUM):
-            self.animals[i].num_food = 0
-
-        for i in range(ENV_N_ANIMALS - num_animals):
-            a1 = best[i % CLONE_NUM]
-
-            child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
-
-            for o in range(child.brain.layers-1):
-                for m in range(child.brain.sizes[o+1]):
-                    child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights[i] if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
-                    child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
-
-            self.animals.append(child)
-
     def generate_food(self):
-        """ generates random food particles (run once per generation) """
-        num_food = ENV_N_FOOD
-
-        pos = [(random() * self.W, random() * self.H) for i in range(num_food)]
-
-        return [Food(x, y, self.W, self.H) for (x, y) in pos]
+        if random()*(20-len(self.food))/20 > 1-FOOD_GEN_RATE:
+            self.food.append(Food(random() * self.W, random() * self.H, self.W, self.H))
 
     def generate_animals(self):
         """ generates random animals on start (only called once) """
