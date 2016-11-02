@@ -44,8 +44,8 @@ class Environment(object):
 
     def draw_display(self):
         """ displays the current environment state in the window """
-        self.canvas.delete("all")
-
+        self.canvas.delete(tkinter.ALL)
+        #canvas.delete(Tkinter.ALL)
         if self.visualise:
             for food in self.food:
                 self.draw_food(food)
@@ -93,23 +93,15 @@ class Environment(object):
 
     def draw_gui(self):
         '''draws the gui'''
-        w = tkinter.Label(self.canvas, text="GENERATION {} FOOD EATEN {}".format(self.generation, ENV_N_FOOD-len(self.food)), fg='white', bg='black')
-        w.place(x = 0, y = 0)
+        #w = tkinter.Label(self.canvas, text="GENERATION {} FOOD EATEN {}".format(self.generation, ENV_N_FOOD-len(self.food)), fg='white', bg='black')
+        #w.place(x = 0, y = 0)
 
     def generate(self):
         """ start a generation """
         self.food += self.generate_food()
         while True:
-            #self.generation += 1
-
-            """ generate random food """
-            #del self.food[:]
-            #self.food += self.generate_food()
-
-            #for i in range(CULL_PERIOD):
             self.simulate()
-
-            #self.cull()
+            self.draw_display()
 
 
     def simulate(self):
@@ -119,26 +111,13 @@ class Environment(object):
             if thing.hunger == 0:
                 self.animals.remove(thing)
                 child = Animal(random() * self.W, random() * self.H, self.W, self.H, self.food)
-                self.animals.sort(key = lambda x: x.num_food)
-                a1 = self.animals[-1]
+                a1 = self.animals[randint(0,len(self.animals)-1)]
                 for o in range(child.brain.layers-1):
                     for m in range(child.brain.sizes[o+1]):
                         child.brain.neurons[o][m].weights = [a1.brain.neurons[o][m].weights[i] if random()>MUTATION_RATE else random()-0.5 for i in range(len(a1.brain.neurons[o][m].weights))]
                         child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
 
                 self.animals.append(child)
-
-
-        """ redraw the display, as the state changed """
-        self.draw_display()
-
-    #def cull(self):
-        """ kill the worst third of the animals """
-    #    self.animals.sort(key = lambda x: x.num_food)
-
-    #    del self.animals[:len(self.animals) - CLONE_NUM]
-
-   #     self.breed()
 
     def breed(self):
         """ combine the remaining animals in pairs """

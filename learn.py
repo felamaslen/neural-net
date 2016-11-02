@@ -35,7 +35,7 @@ class Animal(Entity):
 
         self.food = food
 
-        self.hunger = 150
+        self.hunger = ANIMAL_FULLNESS
 
     def seed(self):
         self.brain.rand_seed()
@@ -92,10 +92,8 @@ class Animal(Entity):
         for item in self.food:
             distance = sqrt((item.x - self.x) ** 2 + (item.y - self.y) ** 2)
 
-            eaten = distance < FOOD_EAT_DISTANCE
-
-            if eaten:
-                self.hunger += 300
+            if distance < FOOD_EAT_DISTANCE:
+                self.hunger += FOOD_SATIATION
                 item.x, item.y = random()*ENV_WIDTH, random()*ENV_HEIGHT
                 self.num_food += 1
 
