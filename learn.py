@@ -95,7 +95,7 @@ class Animal(Entity):
             distance = sqrt((item.x - self.x) ** 2 + (item.y - self.y) ** 2)
 
             if distance < FOOD_EAT_DISTANCE:
-                self.fullness += FOOD_SATIATION
+                self.fullness += FOOD_SATIATION / self.growth
 
                 item.x, item.y = random() * ENV_WIDTH, random() * ENV_HEIGHT
 
