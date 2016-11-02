@@ -50,7 +50,7 @@ class Organism(object):
     def input(self):
         """ use energy in the process """
         self.energy = max(0,
-                self.energy - self.speed ** 1.5 * ENERGY_SPEED_USAGE - ENERGY_USAGE_RATE)
+                self.energy - self.speed ** 2 * ENERGY_SPEED_USAGE - ENERGY_USAGE_RATE)
 
         """ set the speed according to the size """
         self.speed = 0 if self.size <= SIZE_PLANT else self.size / 2
