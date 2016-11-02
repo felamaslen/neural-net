@@ -6,35 +6,50 @@ VISUALISE = True
 
 ENV_WIDTH = 500
 ENV_HEIGHT = 500
-ENV_N_ANIMALS = 5
 
-FOOD_GEN_RATE = 0.8
-FOOD_MAX = 50
-
-ANIMAL_FULLNESS = 120
-FOOD_SATIATION = 120
-STOMACH_SIZE = 300
+ORGANISM_GEN_RATE = 0.1
 
 MUTATION_RATE = 0.05
 
 CLONE_NUM = 5
 
-FOOD_RADIUS = 5
-FOOD_COLOR = "yellow"
+""" initial number of organisms """
+ENV_NUM_PLANTS = 20
 
-ANIMAL_HEAD_RADIUS  = 5
-ANIMAL_HEAD_COLOR   = "red"
-ANIMAL_BODY_LENGTH  = 15
-ANIMAL_BODY_COLOR   = "black"
+""" initial size of organisms """
+SIZE_PLANT = 5
 
-THE_BRAIN = [1,3,2]
+""" initial energy of organisms """
+INITIAL_ENERGY = 1
+
+""" energy usage rate constant """
+ENERGY_USAGE_RATE = 0.05
+
+""" growth rate constant """
+GROWTH_RATE = 0.03
+
+""" rate of photosynthesis """
+PHOTOSYNTHESIS_RATE = 0.01
+
+
+NEGATIVE_GROWTH_CUTOFF = 1#0.25
+
+""" how much energy is wasted when organisms are eaten """
+DIGESTION_EFFICIENCY = 0.5
+
+""" fraction of organism's size which can be eaten by an organism at once """
+STOMACH_SIZE = 0.3
+
+ORGANISM_HEAD_SCALE     = 1
+ORGANISM_HEAD_COLOR     = "red"
+ORGANISM_BODY_LENGTH    = 15
+ORGANISM_BODY_COLOR     = "black"
+
+THE_BRAIN = [2,2]
 
 THRESHOLD_OUTPUT = 0.75
 
-ANIMAL_MOVE_SPEED = 2
-ANIMAL_MOVE_ANGLE = pi / 8
+ORGANISM_MOVE_SPEED = 2
+ORGANISM_MOVE_ANGLE = pi / 8
 
 NUM_CHILDREN = 1
-
-FOOD_STRENGTH = 1
-FOOD_EAT_DISTANCE = FOOD_RADIUS
