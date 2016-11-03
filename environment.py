@@ -1,6 +1,9 @@
 import tkinter
 
 from constants import *
+from organism import Organism
+from random import random
+from math import *
 
 class Environment(object):
     def __init__(self):
@@ -9,6 +12,7 @@ class Environment(object):
 
         """Set up window"""
         self.setup_screen()
+        self.window.mainloop()
 
         """Start simulation"""
         self.run_loop()
@@ -17,20 +21,21 @@ class Environment(object):
         self.window = tkinter.Tk()
         self.canvas = tkinter.Canvas(self.window, width = self.dims[0], height = self.dims[1])
         self.canvas.pack()
-        self.window.mainloop()
 
     def run_loop(self):
         self.organisms = []
         self.framecounter = 0
+        print(len(self.organisms))
         while True:
-            handle_organisms()
+            print(len(self.organisms))
+            self.handle_organisms()
 
             if not self.framecounter%100:   #spawn a new organism every 100 frames
                 self.spawn_organism()
             self.framecounter += 1
 
     def spawn_organism(self):
-        self.organisms += Organism([random()*self.dims[0], random()*self.dims[1]] ,self.dims)
+        self.organisms += [Organism([random()*self.dims[0], random()*self.dims[1]] ,self.dims)]
 
     def handle_organisms(self):
         for organism in self.organisms:
@@ -38,17 +43,16 @@ class Environment(object):
                     self.get_closest(organism, lambda x: x.size < organism.size) +    #closest predator
                     self.get_closest(organism, lambda x: x.size > organism.size))     #closest prey
 
-        cull()
+        self.cull()
 
     def get_closest(self, organism, function):
         temp = list(filter(function, self.organisms))
-        temp.remove(organism)
 
         min_distance = -1
         min_index = -1
 
         for index, candidate in enumerate(temp):
-            dist = (candidate.pos[0]-organism.pos[0])^2+(candidate.pos[1]-organism.pos[1])^2
+            dist = (candidate.pos[0]-organism.pos[0])**2+(candidate.pos[1]-organism.pos[1])**2
             if min_distance == -1 or dist < min_distance:
                 min_distance = dist
                 min_index = index

@@ -1,7 +1,4 @@
-#!/usr/bin/python3
-
 import numpy as np
-import pickle
 
 class Neuron(object):
     def __init__(self, weights, bias):

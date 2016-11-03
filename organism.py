@@ -1,3 +1,10 @@
+from ann import ANN, Perceptron
+from constants import *
+
+from random import random
+from math import *
+
+
 class Organism(object):
     def __init__(self, pos, envdims):
         self.pos = pos
@@ -5,6 +12,7 @@ class Organism(object):
         self.cull = False
         self.size = 5
         self.brain = ANN(ORGANISM_BRAIN, Perceptron)
+        self.orientation = random()*2*pi
 
     def draw(self, canvas):
         canvas.create_line(
@@ -27,8 +35,8 @@ class Organism(object):
         self.size += PHOTOSYNTHESIS_RATE
         self.size *= ORGANISM_SIZE_LOSS
 
-        if self.size = 0:
-            cull = True
+        if self.size == 0:
+            self.cull = True
 
         [turn, direction] = self.brain.run(inputs)
 
@@ -43,17 +51,8 @@ class Organism(object):
         """ turns and moves forward by a set distance """
         self.orientation += angle
 
-        new_x = self.x + ORGANISM_SPEED * cos(self.orientation)
-        new_y = self.y + ORGANISM_SPEED * sin(self.orientation)
+        new_x = max(min(self.pos[0] + ORGANISM_SPEED * cos(self.orientation), ENV_WIDTH), 0)
+        new_y = max(min(self.pos[1] + ORGANISM_SPEED * sin(self.orientation), ENV_HEIGHT), 0)
 
-        """ bounce off the walls """
-        if new_x <= 0 or new_x >= ENV_WIDTH - 1:
-            self.orientation = pi - self.orientation
-            new_x = 0 if new_x <= 0 else ENV_WIDTH - 1
-
-        if new_y <= 0 or new_y >= ENV_HEIGHT - 1:
-            self.orientation *= -1
-            new_y = 0 if new_y <= 0 else ENV_HEIGHT - 1
-
-        self.x = new_x
-        self.y = new_y
+        self.pos[0] = new_x
+        self.pos[1] = new_y
