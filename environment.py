@@ -1,3 +1,7 @@
+import tkinter
+
+from constants import *
+
 class Environment(object):
     def __init__(self):
         """Set environment's dimensions"""
@@ -51,10 +55,12 @@ class Environment(object):
 
         if min_index != -1:
             angle = atan2(
-                temp[min_index].pos[0] - organism.pos[0], 
+                temp[min_index].pos[0] - organism.pos[0],
                 temp[min_index].pos[1] - organism.pos[1])
-           return [min_distance**0.5, angle]
-        return [0]*2
+
+            return [min_distance ** 0.5, angle]
+
+        return [0] * 2
 
     def cull(self):
         for organism in self.organisms:
