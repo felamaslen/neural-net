@@ -143,13 +143,13 @@ class Organism(object):
         new_y = self.y + self.speed * sin(self.orientation)
 
         """ bounce off the walls """
-        if new_x <= 0 or new_x >= self.W - 1:
+        if new_x <= 0 or new_x >= ENV_WIDTH - 1:
             self.orientation = pi - self.orientation
-            new_x = 0 if new_x <= 0 else self.W - 1
+            new_x = 0 if new_x <= 0 else ENV_WIDTH - 1
 
-        if new_y <= 0 or new_y >= self.H - 1:
+        if new_y <= 0 or new_y >= ENV_HEIGHT - 1:
             self.orientation *= -1
-            new_y = 0 if new_y <= 0 else self.H - 1
+            new_y = 0 if new_y <= 0 else ENV_HEIGHT - 1
 
         self.x = new_x
         self.y = new_y
