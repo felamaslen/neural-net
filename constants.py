@@ -7,7 +7,7 @@ VISUALISE = True
 ENV_WIDTH = 500
 ENV_HEIGHT = 500
 
-ORGANISM_GEN_RATE = 0.1
+ORGANISM_GEN_RATE = 0.8
 
 MUTATION_RATE = 0.05
 
@@ -19,33 +19,26 @@ ENV_NUM_PLANTS = 20
 """ initial size of organisms """
 SIZE_PLANT = 5
 
-""" initial energy of organisms """
-INITIAL_ENERGY = 1
-
-""" energy usage rate constant """
-ENERGY_USAGE_RATE = 0.05
+""" initial hunger of organisms """
+INITIAL_HUNGER = 0
+MAX_HUNGER = 500
 
 """ growth rate constant """
-GROWTH_RATE = 0.03
+GROWTH_RATE = 0.005
 
-""" rate of photosynthesis """
-PHOTOSYNTHESIS_RATE = 0.01
+GROWTH_EFFICIENCY = 1#0.999
 
-
-NEGATIVE_GROWTH_CUTOFF = 1#0.25
-
-""" how much energy is wasted when organisms are eaten """
-DIGESTION_EFFICIENCY = 0.5
+DIGESTION_EFFICIENCY = 1
 
 """ fraction of organism's size which can be eaten by an organism at once """
-STOMACH_SIZE = 0.3
+STOMACH_SIZE = 1
 
 ORGANISM_HEAD_SCALE     = 1
 ORGANISM_HEAD_COLOR     = "red"
 ORGANISM_BODY_LENGTH    = 15
 ORGANISM_BODY_COLOR     = "black"
 
-THE_BRAIN = [2,2]
+THE_BRAIN = [2,2,2,2]
 
 THRESHOLD_OUTPUT = 0.75
 

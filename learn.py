@@ -35,33 +35,26 @@ class Organism(object):
         """ initialise speed (0 for plants) """
         self.speed = 0
 
-        """ if this reaches zero, the organism dies """
-        self.energy = INITIAL_ENERGY
+        self.hunger = INITIAL_HUNGER
 
-        """ energy usage and requirements depend on this """
         self.size   = SIZE_PLANT
-        
+
+        self.num_eaten = 0
+
     def seed(self):
         self.brain.seed_network()
 
     def fire_neurons(self, input_values):
         return self.brain.run(input_values)
 
-    def energy_usage_rate(self):
-        return max(0, (self.size - SIZE_PLANT)) * ENERGY_USAGE_RATE
-
-    def growth_rate(self):
-        return np.log(GROWTH_RATE * self.energy + NEGATIVE_GROWTH_CUTOFF)
-
     def input(self):
         """ grow the oganism """
-        self.size += self.growth_rate()
+        self.size = (self.size + GROWTH_RATE) * GROWTH_EFFICIENCY
 
-        """ use energy in the process """
-        self.energy = max(0, self.energy + PHOTOSYNTHESIS_RATE - self.energy_usage_rate())
+        self.hunger += 0.1
 
         """ set the speed according to the size """
-        self.speed = 0 if self.size <= SIZE_PLANT else self.size / 2
+        self.speed = 0 if self.size <= SIZE_PLANT else self.size / 4
 
         """ input values """
 
@@ -134,8 +127,10 @@ class Organism(object):
                 """ put it in our stomach """
                 stomach_remaining -= other.size
 
+                self.hunger = max(0, self.hunger - other.size)
+
                 """ digest it """
-                self.energy += DIGESTION_EFFICIENCY * other.energy
+                self.size += DIGESTION_EFFICIENCY / other.size
 
                 """ remove the eaten item from the others array """
                 self.others.remove(other)

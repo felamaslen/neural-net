@@ -47,16 +47,15 @@ class Environment(object):
     def draw_organism(self, organism):
         """ draw an organism """
         """ draw body """
-        if organism.energy > INITIAL_ENERGY:
-            l_body = ORGANISM_BODY_LENGTH * np.log(organism.energy - INITIAL_ENERGY + 1)
-            c_body = ORGANISM_BODY_COLOR
+        l_body = ORGANISM_BODY_LENGTH * organism.size
+        c_body = ORGANISM_BODY_COLOR
 
-            self.canvas.create_line(
-                    organism.x, organism.y,
-                    organism.x - l_body * cos(organism.orientation),
-                    organism.y - l_body * sin(organism.orientation),
-                    fill = c_body
-                )
+        self.canvas.create_line(
+                organism.x, organism.y,
+                organism.x - l_body * cos(organism.orientation),
+                organism.y - l_body * sin(organism.orientation),
+                fill = c_body
+            )
 
         """ draw head """
         r_head = ORGANISM_HEAD_SCALE * organism.size
@@ -75,65 +74,72 @@ class Environment(object):
 
     def generate(self):
         """ main loop """
-        self.organisms = self.generate_organisms(ENV_NUM_PLANTS)
+        self.organisms = []
+
+        """ generate new organisms every x frames """
+        generate_every = 10
 
         frame = 0
         fps_check_interval = 1000
         prev_time = time.time()
 
         while True:
-            self.spawn_random_organisms()
+            frame += 1
+
+            if frame % generate_every == 0:
+                self.spawn_random_organisms()
 
             self.handle_organisms()
 
             self.draw_display()
 
             #time.sleep(SIMULATION_SPEED)
-            frame += 1
 
             if frame % fps_check_interval == 0:
                 now = time.time()
                 print("fps: {}".format(fps_check_interval // (now - prev_time)))
                 prev_time = now
 
+    def breed(self):
+        """ spawn a new child from the most energetic remaining organisms """
+        child = Organism(
+            random() * self.W, random() * self.H,
+            self.W, self.H,
+            self.organisms
+        )
+
+        if len(self.organisms) > 0:
+            """ inherit characteristics here """
+            """ TODO: write a better cloning algorithm """
+            a1 = self.organisms[randint(0, len(self.organisms)-1)]
+
+            for o in range(child.brain.layers-1):
+                for m in range(child.brain.sizes[o+1]):
+                    child.brain.neurons[o][m].weights = [
+                            a1.brain.neurons[o][m].weights[i] if random() > MUTATION_RATE else random() - 0.5
+                            for i in range(len(a1.brain.neurons[o][m].weights))
+                        ]
+
+
+            child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
+
+        return child
+
     def handle_organisms(self):
         """ input current data to each organism """
         for organism in self.organisms:
             organism.input()
 
-            if organism.energy == 0:
+            if organism.hunger >= MAX_HUNGER:
                 """ kill organisms which go hungry """
                 self.organisms.remove(organism)
-
-                """ spawn a new child from the most energetic remaining organisms """
-                child = Organism(
-                    random() * self.W, random() * self.H,
-                    self.W, self.H,
-                    self.organisms
-                )
-
-                """ inherit characteristics here """
-                """ TODO: write a better cloning algorithm """
-                a1 = self.organisms[randint(0,len(self.organisms)-1)]
-
-                for o in range(child.brain.layers-1):
-                    for m in range(child.brain.sizes[o+1]):
-                        child.brain.neurons[o][m].weights = [
-                                a1.brain.neurons[o][m].weights[i] if random() > MUTATION_RATE else random() - 0.5
-                                for i in range(len(a1.brain.neurons[o][m].weights))
-                            ]
-
-                        child.brain.neurons[o][m].bias = a1.brain.neurons[o][m].bias if random()>MUTATION_RATE else random()-0.5
-
-
-                self.organisms.append(child)
 
     def spawn_random_organisms(self):
         """ spawns new organisms (plants) at random over time """
         if random() * (ENV_NUM_PLANTS - len(self.organisms)) / ENV_NUM_PLANTS > 1 - ORGANISM_GEN_RATE:
-            self.organisms.append(Organism(
-                random() * self.W, random() * self.H, self.W, self.H, self.organisms
-            ))
+            copy = Organism(random() * self.W, random() * self.H, self.W, self.H, self.organisms)
+
+            self.organisms.append(self.breed())
 
     def generate_organisms(self, number):
         """ generates random organisms initially """
