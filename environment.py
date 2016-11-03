@@ -12,10 +12,11 @@ class Environment(object):
 
         """Set up window"""
         self.setup_screen()
-        self.window.mainloop()
 
         """Start simulation"""
         self.run_loop()
+
+        self.window.mainloop()
 
     def setup_screen(self):
         self.window = tkinter.Tk()
@@ -25,12 +26,13 @@ class Environment(object):
     def run_loop(self):
         self.organisms = []
         self.framecounter = 0
-        print(len(self.organisms))
+
         while True:
-            print(len(self.organisms))
             self.handle_organisms()
 
-            if not self.framecounter%100:   #spawn a new organism every 100 frames
+            self.draw()
+
+            if not self.framecounter % 100:   #spawn a new organism every 100 frames
                 self.spawn_organism()
             self.framecounter += 1
 
