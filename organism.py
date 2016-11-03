@@ -1,15 +1,17 @@
+import pdb
 from ann import ANN, Perceptron
 from constants import *
 
 from random import random
 from math import *
-
+import numpy as np
 
 class Organism(object):
     def __init__(self, pos):
         self.pos = pos
+        self.move_to = pos
         self.cull = False
-        self.size = 100
+        self.size = ORGANISM_INITIAL_SIZE
         self.brain = ANN(ORGANISM_BRAIN, Perceptron)
         self.orientation = random()*2*pi
         self.tail_s, self.head_s = ORGANISM_TAILSIZE, ORGANISM_HEADSIZE
@@ -37,34 +39,35 @@ class Organism(object):
         #self.size += PHOTOSYNTHESIS_RATE
         self.size -= ORGANISM_SIZE_LOSS                     #simple linear size loss
 
+        self.size *= ORGANISM_SIZE_EFFICIENCY
+
         if self.size <= 0:
-            print("WASTED AWAY")
             self.cull = True
 
-        if inputs[0] < EAT_DISTANCE and inputs[0] != -1:    #been eaten boyzzz
-            print("EATEN")
-            self.cull = True
+        self.head_s = ORGANISM_HEADSIZE * \
+                (1 + np.log(max(-0.5, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
+        self.tail_s = ORGANISM_TAILSIZE * \
+                (1 + np.log(max(-0.5, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
 
-        if inputs[2] < EAT_DISTANCE and inputs[2] != -1:    #potatos, boil em, mash em, stick em in a stew
-            print("MEALED")
-            self.feed(100)
+        if not self.cull:
+            normalised = self.normalise(inputs)
 
-        inputs = self.normalise(inputs)
-        
-        [turn, direction] = self.brain.run(inputs)
+            #print(inputs)
 
-        delta_angle = (2*direction - 1)*ORGANISM_TURN_AMOUNT if turn else 0
+            [turn, direction] = self.brain.run(inputs[3:])
 
-        self.move(delta_angle)
+            delta_angle = (2*int(direction) - 1)*ORGANISM_TURN_AMOUNT if turn else 0
+
+            self.move_to = self.move(delta_angle)
 
     def normalise(self, inputs):
-        inputs[0] = inputs[0]/(ENV_WIDTH+ENV_HEIGHT)
-        inputs[2] = inputs[2]/(ENV_WIDTH+ENV_HEIGHT)
+        return [
+          inputs[0] / (ENV_WIDTH ** 2 + ENV_HEIGHT ** 2),
+          inputs[1] % (2 * pi) / (2 * pi),
 
-        inputs[1] = (inputs[1]%pi)/pi
-        inputs[3] = (inputs[3]%pi)/pi
-
-        return inputs
+          inputs[2] / (ENV_WIDTH ** 2 + ENV_HEIGHT ** 2),
+          inputs[3] % (2 * pi) / (2 * pi)
+        ]
 
     def seed(self):
         self.brain.seed_network()
@@ -84,5 +87,4 @@ class Organism(object):
             self.orientation *= -1
             new_y = 0 if new_y <= 0 else ENV_HEIGHT - 1
 
-        self.pos[0] = new_x
-        self.pos[1] = new_y
+        return [new_x, new_y]
