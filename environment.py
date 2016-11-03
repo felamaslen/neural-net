@@ -32,7 +32,7 @@ class Environment(object):
 
             self.draw()
 
-            if not self.framecounter % 25 and len(self.organisms) < ENV_MAX_ORGANISMS:   #spawn a new organism every 100 frames
+            if not self.framecounter % 25:# and len(self.organisms) < ENV_MAX_ORGANISMS:   #spawn a new organism every 100 frames
                 self.spawn_organism()
             self.framecounter += 1
             if SLOW_DOWN: sleep(SLOW_DOWN)
@@ -42,7 +42,7 @@ class Environment(object):
             self.organisms += [Organism([random()*self.dims[0], random()*self.dims[1]])]
             self.organisms[-1].seed()      #completely random organism if no organisms alive
         else:
-            self.organisms.sort(key=lambda x: x.size) #choose random organism in the top 5 based on lifetime food eaten
+            self.organisms.sort(key=lambda x: x.success) #choose random organism in the top 5 based on lifetime food eaten
             parent = self.organisms[randint(len(self.organisms)-2, len(self.organisms)-1)]
 
             child = Organism([random()*self.dims[0], random()*self.dims[1]])
@@ -67,10 +67,10 @@ class Environment(object):
         for organism in self.organisms:
 
             """ eat other organisms """
-            input_enemy = self.get_closest(organism, lambda x: x.size < organism.size, self.eat)
+            input_food = self.get_closest(organism, lambda x: x.size < organism.size, self.eat)
 
             """ get eaten by other organisms """
-            input_food = self.get_closest(organism, lambda x: x.size > organism.size, self.eaten)
+            input_enemy = self.get_closest(organism, lambda x: x.size > organism.size, self.eaten)
 
             organism.update(input_enemy + input_food)
 
@@ -89,19 +89,16 @@ class Environment(object):
                 min_index = index
 
         if min_index != -1:
-            angle = atan2(
+            angle = (atan2(
                 temp[min_index].pos[0] - organism.pos[0],
-                temp[min_index].pos[1] - organism.pos[1])
-
-            if (abs(angle) > pi):
-                print("fuck off")
+                temp[min_index].pos[1] - organism.pos[1]) - organism.orientation) % (2 * pi)
 
             if min_distance < EAT_DISTANCE_SQ:
                 run(organism)
 
-            return [min_distance, angle]
+            return [min_distance / ENV_MAX_DISTANCE_SQ, angle]
 
-        return [ENV_WIDTH ** 2 + ENV_HEIGHT ** 2, 0]
+        return [ENV_MAX_DISTANCE_SQ, 0]
 
     def cull(self):
         for organism in self.organisms:

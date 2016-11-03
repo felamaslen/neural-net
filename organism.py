@@ -50,24 +50,11 @@ class Organism(object):
                 (1 + np.log(max(-0.5, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
 
         if not self.cull:
-            normalised = self.normalise(inputs)
+            [turn, direction] = self.brain.run(inputs[1:2])
 
-            #print(inputs)
-
-            [turn, direction] = self.brain.run(inputs[3:])
-
-            delta_angle = (2*int(direction) - 1)*ORGANISM_TURN_AMOUNT if turn else 0
+            delta_angle = (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT if turn else 0
 
             self.move_to = self.move(delta_angle)
-
-    def normalise(self, inputs):
-        return [
-          inputs[0] / (ENV_WIDTH ** 2 + ENV_HEIGHT ** 2),
-          inputs[1] % (2 * pi) / (2 * pi),
-
-          inputs[2] / (ENV_WIDTH ** 2 + ENV_HEIGHT ** 2),
-          inputs[3] % (2 * pi) / (2 * pi)
-        ]
 
     def seed(self):
         self.brain.seed_network()
