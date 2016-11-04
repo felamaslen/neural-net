@@ -2,7 +2,7 @@ import pdb
 from ann import ANN, Perceptron
 from constants import *
 
-from random import random
+from random import random, randint
 from math import *
 import numpy as np
 
@@ -17,6 +17,7 @@ class Organism(object):
         self.orientation = random()*2*pi
         self.tail_s, self.head_s = ORGANISM_TAILSIZE, ORGANISM_HEADSIZE
         self.success = 0
+        self.colour = '#%02x%02x%02x' % (randint(0,255), randint(0,255), randint(0,255))
 
     def draw(self, canvas):
         canvas.create_line(
@@ -29,7 +30,7 @@ class Organism(object):
         canvas.create_oval(
                 self.pos[0] - self.head_s, self.pos[1] - self.head_s,
                 self.pos[0] + self.head_s, self.pos[1] + self.head_s,
-                fill = "red"
+                fill = self.colour
             )
 
     def feed(self, food):
@@ -58,16 +59,19 @@ class Organism(object):
 
             [turn, direction] = self.brain.run(A)
 
-            delta_angle = (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT if turn else 0
+            #delta_angle =  if turn else 0
 
-            self.move_to = self.move(delta_angle)
+            if not turn:
+                self.move_to = self.move(0)
+            else:
+                self.orientation += (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT
+                self.move_to = self.move(0)
 
     def seed(self):
         self.brain.seed_network()
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
-        self.orientation += angle
         new_x = self.pos[0] + self.speed * cos(self.orientation)
         new_y = self.pos[1] + self.speed * sin(self.orientation)
 
