@@ -1,5 +1,5 @@
 import pdb
-from ann import ANN, Perceptron
+from ann import ANN, Neuron
 from constants import *
 
 from random import random, randint
@@ -13,7 +13,7 @@ class Organism(object):
         self.speed = ORGANISM_SPEED
         self.cull = False
         self.size = ORGANISM_INITIAL_SIZE
-        self.brain = ANN(ORGANISM_BRAIN, Perceptron)
+        self.brain = ANN(ORGANISM_BRAIN, Neuron.Perceptron)
         self.orientation = random()*2*pi
         self.tail_s, self.head_s = ORGANISM_TAILSIZE, ORGANISM_HEADSIZE
         self.success = 0
@@ -40,8 +40,6 @@ class Organism(object):
     def update(self, inputs):
         self.size -= ORGANISM_SIZE_LOSS
 
-        #self.size = (self.size - ORGANISM_SIZE_LOSS * self.size ** 2)
-
         self.size *= ORGANISM_SIZE_EFFICIENCY
 
         if self.size <= MINIMUM_SIZE:
@@ -55,10 +53,10 @@ class Organism(object):
         self.speed = (self.head_s) ** 0.5 / 2;
 
         if not self.cull:
-            [turn, direction] = self.brain.run(inputs)
+            [left, right] = self.brain.run(inputs)
 
-            delta_angle = (2 * int(direction) - 1) * ORGANISM_TURN_AMOUNT * int(turn)
-
+            #delta_angle = (2 * int(direction) - 1) * ORGANISM_TURN_AMOUNT * int(turn)
+            delta_angle = (int(left)-int(right)) * ORGANISM_TURN_AMOUNT
             self.move_to = self.move(delta_angle)
 
     def seed(self):

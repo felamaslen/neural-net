@@ -1,41 +1,34 @@
+from random import random
 import numpy as np
 
 class Neuron(object):
-    def __init__(self, weights, bias):
+    def __init__(self, weights, bias, activation_func):
         self.weights = weights
         self.bias = bias
+        self.activation_func = activation_func
 
     @staticmethod
-    def activation_func(z):
+    def Always(z):
         return True
+
+    @staticmethod
+    def Perceptron(z):
+        return z>0
+
+    @staticmethod
+    def Sigmoid(z):
+        return 1.0/(1.0+np.exp(-z))
 
     def get_output(self, inp):
         return self.activation_func(np.dot(self.weights,inp) + self.bias)
 
-class Perceptron(Neuron):
-    def __init__(self, weights, bias):
-        super(Perceptron, self).__init__(weights, bias)
-
-    @staticmethod
-    def activation_func(z):
-        return z>0
-
-class Sigmoid(Neuron):
-    def __init__(self, weights, bias):
-        super(Sigmoid, self).__init__(weights, bias)
-
-    @staticmethod
-    def activation_func(z):
-        return 1.0/(1.0+np.exp(-z))
-
-
 
 class ANN(object):
-    def __init__(self, sizes, neurontype = Sigmoid):
+    def __init__(self, sizes, neurontype = None):
         self.layers = len(sizes)
         self.sizes = sizes
         self.neurontype = neurontype
-        self.neurons = [[self.neurontype([0]*self.sizes[i-1], 0) for j in range(self.sizes[i])] for i in range(1, self.layers)]
+        self.neurons = [[Neuron([0]*self.sizes[i-1], 0, neurontype) for j in range(self.sizes[i])] for i in range(1, self.layers)]
 
     def seed_network(self):
         for o in range(self.layers-1):                                          #for each layer of neurons
@@ -43,8 +36,8 @@ class ANN(object):
                 self.seed_neuron(o, m)
 
     def seed_neuron(self, layer, index, weightindex = 0):
-        self.neurons[layer][index].weights = np.random.randn(self.sizes[layer])
-        self.neurons[layer][index].bias = np.random.randn()
+        self.neurons[layer][index].weights = [random() - 0.5 for i in range(self.sizes[layer])]
+        self.neurons[layer][index].bias = random() - 0.5
 
     def run(self, inputs):
         prev_outputs = np.array(inputs)
