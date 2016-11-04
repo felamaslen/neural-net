@@ -90,7 +90,7 @@ class Environment(object):
                 ]
             ])
 
-            organism.update(input_enemy[:2] + input_food[:2])
+            organism.update(input_enemy[:2] + input_food[:2] + [organism.head_s / ORGANISM_SOFT_MAX_HEAD_SIZE])
 
         self.cull()
 

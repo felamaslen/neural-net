@@ -52,26 +52,23 @@ class Organism(object):
         self.tail_s = ORGANISM_TAILSIZE * \
                 (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
 
-        self.speed = (self.head_s / 2) ** 0.5;
+        self.speed = (self.head_s) ** 0.5 / 2;
 
         if not self.cull:
-            A = inputs#[3:]
+            [turn, direction] = self.brain.run(inputs)
 
-            [turn, direction] = self.brain.run(A)
+            delta_angle = (2 * int(direction) - 1) * ORGANISM_TURN_AMOUNT * int(turn)
 
-            #delta_angle =  if turn else 0
-
-            if not turn:
-                self.move_to = self.move(0)
-            else:
-                self.orientation += (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT
-                self.move_to = self.move(0)
+            self.move_to = self.move(delta_angle)
 
     def seed(self):
         self.brain.seed_network()
 
     def move(self, angle):
         """ turns and moves forward by a set distance """
+
+        self.orientation += angle
+        
         new_x = self.pos[0] + self.speed * cos(self.orientation)
         new_y = self.pos[1] + self.speed * sin(self.orientation)
 
