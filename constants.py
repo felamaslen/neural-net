@@ -3,6 +3,8 @@ from math import pi
 ENV_WIDTH = 1024
 ENV_HEIGHT = 768
 
+DEBUG_LINES = False
+
 ENV_MAX_DISTANCE_SQ = ENV_WIDTH ** 2 + ENV_HEIGHT ** 2
 
 VISUALISE = True

@@ -66,7 +66,8 @@ class Environment(object):
         that.cull = True
 
     def handle_organisms(self):
-        del LINES_DEBUG[:]
+        if DEBUG_LINES:
+            del LINES_DEBUG[:]
         for organism in self.organisms:
             """ eat other organisms """
             input_food = self.get_closest(organism, lambda x: x.size < organism.size, self.eat)
@@ -74,18 +75,19 @@ class Environment(object):
             """ get eaten by other organisms """
             input_enemy = self.get_closest(organism, lambda x: x.size > organism.size)
 
-            LINES_DEBUG.append([
-                [
-                    organism.pos[0], organism.pos[1],
-                    organism.pos[0] + input_food[2] ** 0.5 * cos(input_food[3]),
-                    organism.pos[1] + input_food[2] ** 0.5 * sin(input_food[3])
-                ],
-                [
-                    organism.pos[0], organism.pos[1],
-                    organism.pos[0] + input_enemy[2] ** 0.5 * cos(input_enemy[3]),
-                    organism.pos[1] + input_enemy[2] ** 0.5 * sin(input_enemy[3])
-                ]
-            ])
+            if DEBUG_LINES:
+                LINES_DEBUG.append([
+                    [
+                        organism.pos[0], organism.pos[1],
+                        organism.pos[0] + input_food[2] ** 0.5 * cos(input_food[3]),
+                        organism.pos[1] + input_food[2] ** 0.5 * sin(input_food[3])
+                    ],
+                    [
+                        organism.pos[0], organism.pos[1],
+                        organism.pos[0] + input_enemy[2] ** 0.5 * cos(input_enemy[3]),
+                        organism.pos[1] + input_enemy[2] ** 0.5 * sin(input_enemy[3])
+                    ]
+                ])
 
             organism.update(input_enemy[:2] + input_food[:2] + [organism.head_s / ORGANISM_SOFT_MAX_HEAD_SIZE])
 
@@ -146,9 +148,10 @@ class Environment(object):
             for organism in self.organisms:
                 organism.draw(self.canvas)
 
-            for line in LINES_DEBUG:
-                self.canvas.create_line(line[0][0], line[0][1], line[0][2], line[0][3], fill = "green")
-                self.canvas.create_line(line[1][0], line[1][1], line[1][2], line[1][3], fill = "red")
+            if DEBUG_LINES:
+                for line in LINES_DEBUG:
+                    self.canvas.create_line(line[0][0], line[0][1], line[0][2], line[0][3], fill = "green")
+                    self.canvas.create_line(line[1][0], line[1][1], line[1][2], line[1][3], fill = "red")
 
         self.window.update_idletasks()
         self.window.update()
