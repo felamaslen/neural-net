@@ -15,11 +15,51 @@ class Organism(object):
         self.size = ORGANISM_INITIAL_SIZE
         self.brain = ANN(ORGANISM_BRAIN, Perceptron)
         self.orientation = random()*2*pi
-        self.tail_s, self.head_s = ORGANISM_TAILSIZE, ORGANISM_HEADSIZE
+        self.tail_s, self.leg_s, self.head_s = ORGANISM_TAILSIZE, ORGANISM_LEGSIZE, ORGANISM_HEADSIZE
         self.success = 0
         self.colour = '#%02x%02x%02x' % (randint(0,255), randint(0,255), randint(0,255))
 
+    def coord_transform(self, objects):
+        """ transforms coords by current orientation """
+        cosT = cos(self.orientation - pi / 2)
+        sinT = sin(self.orientation - pi / 2)
+
+        return [
+            [
+                [
+                    self.pos[0] + cosT * x - sinT * y,
+                    self.pos[1] + sinT * x + cosT * y
+                ]
+                for (x, y) in group
+            ]
+            for group in objects
+        ]
+
+    def get_legs(self):
+        """ gets array of coordinates to draw legs """
+
+        l1 = self.tail_s * 0.1
+        l2 = self.tail_s * 0.3
+        l3 = self.tail_s * 0.5
+
+        legs = [
+                [
+                    [0, -self.tail_s + j],
+                    [self.leg_s, -self.tail_s + j]
+                ] + [
+                    [0, -self.tail_s + j],
+                    [-self.leg_s, -self.tail_s + j]
+                ]
+                for j in [l1, l2, l3]
+            ]
+
+        coords = legs
+
+        """ transform the coordinates """
+        return self.coord_transform(coords)
+
     def draw(self, canvas):
+        """ draw body """
         canvas.create_line(
                 self.pos[0], self.pos[1],
                 self.pos[0] - self.tail_s * cos(self.orientation),
@@ -27,6 +67,14 @@ class Organism(object):
                 fill = "black"
             )
 
+        """ draw legs """
+        legs = self.get_legs()
+
+        for leg in legs:
+            canvas.create_line(leg[0][0], leg[0][1], leg[1][0], leg[1][1], fill = "black")
+            canvas.create_line(leg[2][0], leg[2][1], leg[3][0], leg[3][1], fill = "black")
+
+        """ draw head """
         canvas.create_oval(
                 self.pos[0] - self.head_s, self.pos[1] - self.head_s,
                 self.pos[0] + self.head_s, self.pos[1] + self.head_s,
@@ -47,10 +95,12 @@ class Organism(object):
         if self.size <= MINIMUM_SIZE:
             self.cull = True
 
-        self.head_s = ORGANISM_HEADSIZE * \
-                (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
-        self.tail_s = ORGANISM_TAILSIZE * \
-                (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
+        size_scale = 1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / \
+                ORGANISM_INITIAL_SIZE) + 1)
+
+        self.head_s = ORGANISM_HEADSIZE * size_scale
+        self.tail_s = ORGANISM_TAILSIZE * size_scale
+        self.leg_s  = ORGANISM_LEGSIZE  * size_scale
 
         self.speed = (self.head_s) ** 0.5 / 2;
 
