@@ -17,7 +17,10 @@ class Organism(object):
         self.orientation = random()*2*pi
         self.tail_s, self.head_s = ORGANISM_TAILSIZE, ORGANISM_HEADSIZE
         self.success = 0
+        self.age = 0
         self.colour = '#%02x%02x%02x' % (randint(0,255), randint(0,255), randint(0,255))
+
+        self.draw_lines = False
 
     def draw(self, canvas):
         canvas.create_line(
@@ -38,6 +41,8 @@ class Organism(object):
         self.success += 1
 
     def update(self, inputs):
+        self.age += 1
+
         self.size -= ORGANISM_SIZE_LOSS
 
         #self.size = (self.size - ORGANISM_SIZE_LOSS * self.size ** 2)
@@ -46,6 +51,8 @@ class Organism(object):
 
         if self.size <= MINIMUM_SIZE:
             self.cull = True
+
+        self.draw_lines = self.size > 400
 
         self.head_s = ORGANISM_HEADSIZE * \
                 (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
@@ -70,7 +77,7 @@ class Organism(object):
 
         self.orientation += angle
 
-        speed = self.speed / (1 + abs(angle))
+        speed = self.speed / (1 + abs((angle % (2*pi)) / (2*pi)))
 
         new_x = self.pos[0] + speed * cos(self.orientation)
         new_y = self.pos[1] + speed * sin(self.orientation)

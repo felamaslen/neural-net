@@ -44,8 +44,8 @@ class Environment(object):
             self.organisms += [Organism([random()*self.dims[0], random()*self.dims[1]])]
             self.organisms[-1].seed()      #completely random organism if no organisms alive
         else:
-            self.organisms.sort(key=lambda x: x.size) #choose random organism in the top 5 based on lifetime food eaten
-            parent = self.organisms[randint(len(self.organisms)-5, len(self.organisms)-1)]
+            self.organisms.sort(key=lambda x: x.success / x.age) #choose random organism in the top 5 based on lifetime food eaten
+            parent = self.organisms[randint(len(self.organisms) - 5, len(self.organisms)-1)]
 
             child = Organism([random()*self.dims[0], random()*self.dims[1]])
 
@@ -70,12 +70,12 @@ class Environment(object):
             del LINES_DEBUG[:]
         for organism in self.organisms:
             """ eat other organisms """
-            input_food = self.get_closest(organism, lambda x: x.size < organism.size, self.eat)
+            input_food = self.get_closest(organism, lambda x: x.size < organism.size * STOMACH_SIZE, self.eat)
 
             """ get eaten by other organisms """
-            input_enemy = self.get_closest(organism, lambda x: x.size > organism.size)
+            input_enemy = self.get_closest(organism, lambda x: x.size * STOMACH_SIZE > organism.size)
 
-            if DEBUG_LINES:
+            if DEBUG_LINES and organism.draw_lines:
                 LINES_DEBUG.append([
                     [
                         organism.pos[0], organism.pos[1],
@@ -89,7 +89,7 @@ class Environment(object):
                     ]
                 ])
 
-            organism.update(input_enemy[:2] + input_food[:2] + [organism.head_s / ORGANISM_SOFT_MAX_HEAD_SIZE])
+            organism.update(input_enemy[1:2] + input_food[1:2] + [organism.head_s / ORGANISM_SOFT_MAX_HEAD_SIZE])
 
         self.cull()
 
