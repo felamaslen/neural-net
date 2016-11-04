@@ -51,12 +51,10 @@ class Organism(object):
         self.tail_s = ORGANISM_TAILSIZE * \
                 (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
 
-        self.speed = (self.head_s / 2) ** 0.5;
+        self.speed = (self.head_s) ** 0.5 / 2;
 
         if not self.cull:
-            A = inputs#[3:]
-
-            [turn, direction] = self.brain.run(A)
+            [turn, direction] = self.brain.run(inputs)
 
             delta_angle = (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT if turn else 0
 
