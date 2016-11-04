@@ -62,7 +62,7 @@ class Environment(object):
             self.organisms += [child]
 
     def eat(self, this, that):
-        this.feed(1000)
+        this.feed(FEED_AMOUNT)
         that.cull = True
 
     def eaten(self, this, that):
@@ -80,13 +80,13 @@ class Environment(object):
             LINES_DEBUG.append([
                 [
                     organism.pos[0], organism.pos[1],
-                    organism.pos[0] + input_food[0] ** 0.5 * cos(input_food[2]),
-                    organism.pos[1] + input_food[0] ** 0.5 * sin(input_food[2])
+                    organism.pos[0] + input_food[2] ** 0.5 * cos(input_food[3]),
+                    organism.pos[1] + input_food[2] ** 0.5 * sin(input_food[3])
                 ],
                 [
                     organism.pos[0], organism.pos[1],
-                    organism.pos[0] + input_enemy[0] ** 0.5 * cos(input_enemy[2]),
-                    organism.pos[1] + input_enemy[0] ** 0.5 * sin(input_enemy[2])
+                    organism.pos[0] + input_enemy[2] ** 0.5 * cos(input_enemy[3]),
+                    organism.pos[1] + input_enemy[2] ** 0.5 * sin(input_enemy[3])
                 ]
             ])
 
@@ -100,10 +100,11 @@ class Environment(object):
         min_distance = -1
         min_index = -1
 
-        eat_distance_sq = (organism.head_s) ** 2 / 2
+        eat_distance_sq = (organism.head_s / 2) ** 2
 
         angle = 0
         a2 = 0
+        d2 = 0
         distance = ENV_MAX_DISTANCE_SQ
 
         for index, candidate in enumerate(temp):
@@ -113,10 +114,10 @@ class Environment(object):
                 min_index = index
 
         if min_index != -1:
-            angle = (atan2(
+            angle = ((atan2(
                 temp[min_index].pos[1] - organism.pos[1],
                 temp[min_index].pos[0] - organism.pos[0]
-            ) - (organism.orientation)) % (2 * pi)
+            ) - (organism.orientation)) % (2 * pi)) / pi
 
             a2 = atan2(
                 temp[min_index].pos[1] - organism.pos[1],
@@ -126,9 +127,12 @@ class Environment(object):
             if min_distance < eat_distance_sq:
                 run(organism, self.organisms[self.organisms.index(temp[min_index])])
 
-            distance = min_distance
+            d2 = min_distance
 
-        return [distance, angle, a2]
+            distance = d2 / ENV_MAX_DISTANCE_SQ
+
+
+        return [distance, angle, d2, a2]
 
     def cull(self):
         for organism in self.organisms:

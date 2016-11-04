@@ -54,7 +54,7 @@ class Organism(object):
         self.speed = (self.head_s / 2) ** 0.5;
 
         if not self.cull:
-            A = inputs[3:]
+            A = inputs#[3:]
 
             [turn, direction] = self.brain.run(A)
 
