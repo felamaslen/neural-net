@@ -55,11 +55,12 @@ class Organism(object):
         self.speed = (self.head_s) ** 0.5 / 2;
 
         if not self.cull:
-            [turn, direction] = self.brain.run(inputs)
+            [turn, direction, stop] = self.brain.run(inputs)
 
             delta_angle = (2 * int(direction) - 1) * ORGANISM_TURN_AMOUNT * int(turn)
 
-            self.move_to = self.move(delta_angle)
+            if not stop:
+                self.move_to = self.move(delta_angle)
 
     def seed(self):
         self.brain.seed_network()
@@ -68,9 +69,11 @@ class Organism(object):
         """ turns and moves forward by a set distance """
 
         self.orientation += angle
-        
-        new_x = self.pos[0] + self.speed * cos(self.orientation)
-        new_y = self.pos[1] + self.speed * sin(self.orientation)
+
+        speed = self.speed / (1 + abs(angle))
+
+        new_x = self.pos[0] + speed * cos(self.orientation)
+        new_y = self.pos[1] + speed * sin(self.orientation)
 
         """ bounce off the walls """
         if new_x <= 0 or new_x >= ENV_WIDTH - 1:

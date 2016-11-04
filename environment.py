@@ -65,9 +65,6 @@ class Environment(object):
         this.feed(FEED_AMOUNT)
         that.cull = True
 
-    def eaten(self, this, that):
-        pass
-
     def handle_organisms(self):
         del LINES_DEBUG[:]
         for organism in self.organisms:
@@ -75,7 +72,7 @@ class Environment(object):
             input_food = self.get_closest(organism, lambda x: x.size < organism.size, self.eat)
 
             """ get eaten by other organisms """
-            input_enemy = self.get_closest(organism, lambda x: x.size > organism.size, self.eaten)
+            input_enemy = self.get_closest(organism, lambda x: x.size > organism.size)
 
             LINES_DEBUG.append([
                 [
@@ -94,13 +91,13 @@ class Environment(object):
 
         self.cull()
 
-    def get_closest(self, organism, criteria, run):
+    def get_closest(self, organism, criteria, run = None):
         temp = list(filter(criteria, self.organisms))
 
         min_distance = -1
         min_index = -1
 
-        eat_distance_sq = (organism.head_s / 2) ** 2
+        this_head_size_sq = organism.head_s ** 2
 
         angle = 0
         a2 = 0
@@ -124,7 +121,7 @@ class Environment(object):
                 temp[min_index].pos[0] - organism.pos[0]
             )
 
-            if min_distance < eat_distance_sq:
+            if not run is None and min_distance <= 1.5 * this_head_size_sq + candidate.head_s ** 2:
                 run(organism, self.organisms[self.organisms.index(temp[min_index])])
 
             d2 = min_distance
