@@ -10,6 +10,7 @@ class Organism(object):
     def __init__(self, pos):
         self.pos = pos
         self.move_to = pos
+        self.speed = ORGANISM_SPEED
         self.cull = False
         self.size = ORGANISM_INITIAL_SIZE
         self.brain = ANN(ORGANISM_BRAIN, Perceptron)
@@ -36,21 +37,26 @@ class Organism(object):
         self.success += 1
 
     def update(self, inputs):
-        #self.size += PHOTOSYNTHESIS_RATE
-        self.size -= ORGANISM_SIZE_LOSS                     #simple linear size loss
+        self.size -= ORGANISM_SIZE_LOSS
+
+        #self.size = (self.size - ORGANISM_SIZE_LOSS * self.size ** 2)
 
         self.size *= ORGANISM_SIZE_EFFICIENCY
 
-        if self.size <= 0:
+        if self.size <= MINIMUM_SIZE:
             self.cull = True
 
         self.head_s = ORGANISM_HEADSIZE * \
-                (1 + np.log(max(-0.5, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
+                (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
         self.tail_s = ORGANISM_TAILSIZE * \
-                (1 + np.log(max(-0.5, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
+                (1 + np.log(max(0, (self.size - ORGANISM_INITIAL_SIZE) / ORGANISM_INITIAL_SIZE) + 1))
+
+        self.speed = (self.head_s / 2) ** 0.5;
 
         if not self.cull:
-            [turn, direction] = self.brain.run(inputs[1:2])
+            A = inputs[3:]
+
+            [turn, direction] = self.brain.run(A)
 
             delta_angle = (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT if turn else 0
 
@@ -62,8 +68,8 @@ class Organism(object):
     def move(self, angle):
         """ turns and moves forward by a set distance """
         self.orientation += angle
-        new_x = self.pos[0] + ORGANISM_SPEED * cos(self.orientation)
-        new_y = self.pos[1] + ORGANISM_SPEED * sin(self.orientation)
+        new_x = self.pos[0] + self.speed * cos(self.orientation)
+        new_y = self.pos[1] + self.speed * sin(self.orientation)
 
         """ bounce off the walls """
         if new_x <= 0 or new_x >= ENV_WIDTH - 1:
