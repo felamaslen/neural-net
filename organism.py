@@ -19,6 +19,8 @@ class Organism(object):
         self.success = 0
         self.colour = '#%02x%02x%02x' % (randint(0,255), randint(0,255), randint(0,255))
 
+        self.leg_crawl = [0] * 6
+
     def coord_transform(self, objects):
         """ transforms coords by current orientation """
         cosT = cos(self.orientation - pi / 2)
@@ -38,19 +40,32 @@ class Organism(object):
     def get_legs(self):
         """ gets array of coordinates to draw legs """
 
-        l1 = self.tail_s * 0.1
-        l2 = self.tail_s * 0.3
-        l3 = self.tail_s * 0.5
+        leg_pos = [
+            self.tail_s * 0.1,
+            self.tail_s * 0.3,
+            self.tail_s * 0.5
+        ]
 
         legs = [
                 [
-                    [0, -self.tail_s + j],
-                    [self.leg_s, -self.tail_s + j]
-                ] + [
-                    [0, -self.tail_s + j],
-                    [-self.leg_s, -self.tail_s + j]
+                    [0, -self.tail_s + leg_pos[j]],
+                    [self.leg_s / LEG_JOINT, -self.tail_s + leg_pos[j]]
+                ] +
+                [
+                    [self.leg_s / LEG_JOINT, -self.tail_s + leg_pos[j]],
+                    [self.leg_s, -self.tail_s + leg_pos[j] - \
+                            self.leg_crawl[j * 2] * self.leg_s * CRAWL_RATIO]
+                ] +
+                [
+                    [0, -self.tail_s + leg_pos[j]],
+                    [-self.leg_s / LEG_JOINT, -self.tail_s + leg_pos[j]]
+                ] +
+                [
+                    [-self.leg_s / LEG_JOINT, -self.tail_s + leg_pos[j]],
+                    [-self.leg_s, -self.tail_s + leg_pos[j] - \
+                            self.leg_crawl[j * 2 + 1] * self.leg_s * CRAWL_RATIO]
                 ]
-                for j in [l1, l2, l3]
+                for j in range(3)
             ]
 
         coords = legs
@@ -71,8 +86,8 @@ class Organism(object):
         legs = self.get_legs()
 
         for leg in legs:
-            canvas.create_line(leg[0][0], leg[0][1], leg[1][0], leg[1][1], fill = "black")
-            canvas.create_line(leg[2][0], leg[2][1], leg[3][0], leg[3][1], fill = "black")
+            for i in range(len(leg) // 2):
+                canvas.create_line(leg[2*i][0], leg[2*i][1], leg[2*i+1][0], leg[2*i+1][1], fill = "black")
 
         """ draw head """
         canvas.create_oval(
@@ -102,15 +117,29 @@ class Organism(object):
         self.tail_s = ORGANISM_TAILSIZE * size_scale
         self.leg_s  = ORGANISM_LEGSIZE  * size_scale
 
-        self.speed = (self.head_s) ** 0.5 / 2;
-
         if not self.cull:
-            [turn, direction, stop] = self.brain.run(inputs)
+            [l1, l2, l3, r1, r2, r3] = self.brain.run(inputs)
 
-            delta_angle = (2 * int(direction) - 1) * ORGANISM_TURN_AMOUNT * int(turn)
+            left = [l1, l2, l3]
+            left.sort()
 
-            if not stop:
-                self.move_to = self.move(delta_angle)
+            right = [r1, r2, r3]
+            right.sort()
+
+            for j in range(3):
+                self.leg_crawl[4-2*j] = left[j]
+                self.leg_crawl[5-2*j] = right[j]
+
+            self.speed = sum(self.leg_crawl) * self.leg_s ** 0.5 * CRAWL_SPEED
+
+            turn_left = self.leg_crawl[0] + self.leg_crawl[1] + self.leg_crawl[2]
+            turn_right = self.leg_crawl[3] + self.leg_crawl[4] + self.leg_crawl[5]
+
+            turn = turn_right - turn_left
+
+            delta_angle = turn * ORGANISM_TURN_AMOUNT
+
+            self.move_to = self.move(delta_angle)
 
     def seed(self):
         self.brain.seed_network()
