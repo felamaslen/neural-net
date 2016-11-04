@@ -56,7 +56,7 @@ class Organism(object):
         if not self.cull:
             [turn, direction] = self.brain.run(inputs)
 
-            delta_angle = (2*int(direction) - 1) * ORGANISM_TURN_AMOUNT if turn else 0
+            delta_angle = (2 * int(direction) - 1) * ORGANISM_TURN_AMOUNT * int(turn)
 
             self.move_to = self.move(delta_angle)
 
